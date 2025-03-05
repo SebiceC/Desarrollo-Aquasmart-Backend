@@ -176,7 +176,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://tu-frontend.com",
     "http://localhost:5173",  # Para desarrollo con React
     "http://localhost:8081",
-    "https://desarrollo-aqua-smart-frontend-mu.vercel.app",
+    "https://desarrollo-aqua-smart-frontend.vercel.app",
 ]
 
 # También puedes permitir todas las solicitudes (NO recomendado en producción)
