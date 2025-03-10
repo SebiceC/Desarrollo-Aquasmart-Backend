@@ -284,6 +284,18 @@ class AdminUserUpdateAPIView(generics.RetrieveUpdateAPIView):
     
     def patch(self, request, *args, **kwargs):
         """Maneja actualizaciones parciales con formato de respuesta consistente"""
+        
+        # Validación para el documento
+        if 'document' in request.data:
+            return Response(
+                {
+                    'status': 'error',
+                    'message': 'Modificación de documento no permitida',
+                    'details': 'El documento de identidad no puede ser modificado'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
         response = super().patch(request, *args, **kwargs)
         
         if response.status_code == status.HTTP_200_OK:
