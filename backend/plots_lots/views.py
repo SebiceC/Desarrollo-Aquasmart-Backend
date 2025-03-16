@@ -4,11 +4,21 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Plot
 from .serializers import PlotSerializer
+from .permissions import IsOwnerOrAdmin
 
 class PlotViewSet(viewsets.ModelViewSet):
     queryset = Plot.objects.all()
     serializer_class = PlotSerializer
-    permission_classes = [IsAuthenticated]  # Solo usuarios autenticados pueden acceder
+    permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
+
+    def get_queryset(self):
+        """
+        Retorna todos los predios para administradores,
+        o solo los predios del usuario para usuarios normales.
+        """
+        if self.request.user.is_staff:
+            return Plot.objects.all()
+        return Plot.objects.filter(owner=self.request.user)
 
     def perform_update(self, serializer):
         """ Validar que el usuario no envíe los mismos datos al actualizar """
