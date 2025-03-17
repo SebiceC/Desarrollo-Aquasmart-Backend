@@ -1,6 +1,8 @@
 from django.urls import path
-from .views import CustomUserCreateView, CustomUserListView,UserRegisterAPIView, DocumentTypeView, PersonTypeView, UserInactiveAPIView,UserProfilelView,DocumentTypeListView,PersonTypeListView, AdminUserUpdateAPIView, UserProfileUpdateView, UserActivateAPIView
+from .views import CustomUserCreateView, CustomUserListView,UserRegisterAPIView, DocumentTypeView, PersonTypeView, UserInactiveAPIView,UserProfilelView,DocumentTypeListView,PersonTypeListView, AdminUserUpdateAPIView, UserProfileUpdateView, UserActivateAPIView, AssignPermissionToUser, RemovePermissionFromUser, ListUserPermissions
 from .authentication import GenerateOtpPasswordRecoveryView,ResetPasswordView,ValidateOtpView, LoginView, LogoutView, ValidateTokenView, ChangePasswordView
+
+
 urlpatterns = [
     path('admin/listed', CustomUserListView.as_view(), name='customuser-list'),  # Listar usuarios
     path('admin/document-type',DocumentTypeView.as_view(), name='document-type'),
@@ -21,4 +23,7 @@ urlpatterns = [
     path('change-password', ChangePasswordView.as_view(), name='change-password'),
     path('admin/update/<str:document>', AdminUserUpdateAPIView.as_view(), name='admin-user-update'),
     path('profile/update',UserProfileUpdateView.as_view(), name='profile-update'),
+    path('custom-permissions/assign/', AssignPermissionToUser.as_view(), name='assign-permission'),
+    path('custom-permissions/remove/', RemovePermissionFromUser.as_view(), name='remove-permission'),
+    path('custom-permissions/user/<str:document>/', ListUserPermissions.as_view(), name='user-permissions'),
 ]
