@@ -4,12 +4,13 @@ from rest_framework.permissions import AllowAny
 from rest_framework import status
 from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse
 from .models import Otp,CustomUser
-from .serializers import  GenerateOtpPasswordRecoverySerializer, ValidateOtpSerializer, ResetPasswordSerializer, LoginSerializer
+from .serializers import  GenerateOtpPasswordRecoverySerializer, ValidateOtpSerializer, ResetPasswordSerializer, LoginSerializer,GenerateOtpLoginSerializer
 from rest_framework.exceptions import ValidationError, NotFound,PermissionDenied
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
 from API.custom_auth import CustomTokenAuthentication
 from .serializers import ChangePasswordSerializer
+from API.sendmsn import send_email2
 class LoginView(APIView):
     """
     Endpoint para la autenticación de usuarios con generación de OTP.
@@ -145,7 +146,46 @@ class LoginView(APIView):
                 {"error": "Unexpected error.", "detail": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             ) 
+            
+class GenerateOtpLoginView(APIView):
+    permission_classes = [AllowAny]
 
+    def post(self, request, *args, **kwargs):
+        try:
+            serializer = GenerateOtpLoginSerializer(data=request.data)  
+            if serializer.is_valid(raise_exception=True):
+                user = serializer.validated_data['document']  # Usuario validado en `validate_document`
+
+                # Eliminar OTPs previos que sean para login
+                Otp.objects.filter(user=user.document, is_login=True).delete()
+
+                # Crear nuevo OTP
+                nuevo_otp = Otp.objects.create(user=user, is_login=True)
+                otp_generado = nuevo_otp.generate_otp()
+                user_instance = CustomUser.objects.filter(document=user.document).first()
+                # Enviar OTP por correo
+                try:
+                    send_email2(user.email, otp_generado, purpose="login",name=user_instance.first_name)
+                except Exception as e:
+                    return Response(
+                        {"error": f"Error al enviar el correo: {str(e)}"},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    )
+
+                return Response(
+                    {"message": "Se ha enviado el código OTP para iniciar sesión."},
+                    status=status.HTTP_200_OK
+                )
+
+        except ValidationError as e:
+            return Response({"error": e.detail}, status=status.HTTP_400_BAD_REQUEST)      
+        except Exception as e:
+            return Response(
+                {"error": "Unexpected error.", "detail": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+         
 
 
 class GenerateOtpPasswordRecoveryView(APIView):

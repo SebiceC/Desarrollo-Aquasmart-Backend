@@ -13,6 +13,7 @@ urlpatterns = [
     path('profile', UserProfilelView.as_view(), name='perfil-usuario'),
     path('pre-register', CustomUserCreateView.as_view(), name='customuser-pre-register'),  # Pre-registro de usuarios    
     path('login', LoginView.as_view(), name='login'), # Login
+    path('generate-otp-login',GenerateOtpLoginView.as_view(), name='generate_otp_login_agin'),
     path('generate-otp', GenerateOtpPasswordRecoveryView.as_view(), name='generate_otp_password_recovery'),
     path('validate-otp',ValidateOtpView.as_view(), name='validate-otp'),
     path('reset-password',ResetPasswordView.as_view(), name='reset-password'),

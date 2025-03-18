@@ -1,9 +1,10 @@
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import generics
+from rest_framework.permissions import IsAuthenticated,IsAdminUser
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Plot
-from .serializers import PlotSerializer
+from .models import Plot,Lot
+from .serializers import PlotSerializer,LotSerializer,LotActivationSerializer
 from .permissions import IsOwnerOrAdmin
 
 class PlotViewSet(viewsets.ModelViewSet):
@@ -87,3 +88,45 @@ class PlotViewSet(viewsets.ModelViewSet):
             return Response({"success": "Predio habilitado exitosamente."}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": "No se pudo habilitar el predio."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class LotCreateView(generics.CreateAPIView):
+    queryset = Lot.objects.all()
+    serializer_class = LotSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]     
+    
+class ActivateLotView(generics.UpdateAPIView):
+    queryset = Lot.objects.all()
+    serializer_class = LotActivationSerializer
+    lookup_field = 'id_lot'  # Usamos el campo id_lot para buscar el lote
+    permission_classes = [IsAuthenticated,IsAdminUser]
+
+    def patch(self, request, *args, **kwargs):
+        instance = self.get_object()  # Obtiene el lote por id_lot
+        instance.is_activate = True  # Activa el lote
+        instance.save()  # Guarda los cambios
+
+        return Response(
+            {
+                "message": f"Lote {instance.id_lot} activado correctamente.",
+                "data": {"is_activate": True}
+            },
+            status=status.HTTP_200_OK
+        )    
+
+class DeactivateLotView(generics.UpdateAPIView):
+    queryset = Lot.objects.all()
+    serializer_class = LotActivationSerializer
+    lookup_field = 'id_lot'  # Usamos el campo id_lot para buscar el lote
+    permission_classes = [IsAuthenticated,IsAdminUser]
+    def patch(self, request, *args, **kwargs):
+        instance = self.get_object()  # Obtiene el lote por id_lot
+        instance.is_activate = False  # Desactiva el lote
+        instance.save()  # Guarda los cambios
+
+        return Response(
+            {
+                "message": f"Lote {instance.id_lot} desactivado correctamente.",
+                "data": {"is_activate": False}
+            },
+            status=status.HTTP_200_OK
+        )    

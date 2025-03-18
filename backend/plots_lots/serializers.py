@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Plot
+from .models import Plot,Lot,SoilType
 from users.models import CustomUser
 from rest_framework.exceptions import NotFound
 class PlotSerializer(serializers.ModelSerializer):
@@ -27,3 +27,32 @@ class PlotSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("La georeferenciación ya está asignada a otro predio.")
 
         return data
+    
+class LotSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Lot
+        fields = ['id_lot', 'plot', 'crop_type', 'crop_variety', 'soil_type', 'is_activate']
+        read_only_fields = ['id_lot']  # id_lot se genera automáticamente, no debe ser enviado por el usuario
+
+    def validate_plot(self, value):
+        """
+        Validación personalizada para el campo 'plot'.
+        Asegura que el predio exista en la base de datos.
+        """
+        if not Plot.objects.filter(id_plot=value.id_plot).exists():
+            raise serializers.ValidationError("El predio no existe.")
+        return value
+
+    def validate_soil_type(self, value):
+        """
+        Validación personalizada para el campo 'soil_type'.
+        Asegura que el tipo de suelo exista en la base de datos.
+        """
+        if not SoilType.objects.filter(id=value.id).exists():
+            raise serializers.ValidationError("El tipo de suelo no existe.")
+        return value
+
+class LotActivationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Lot
+        fields = ['is_activate']  # Solo permitimos actualizar este campo    

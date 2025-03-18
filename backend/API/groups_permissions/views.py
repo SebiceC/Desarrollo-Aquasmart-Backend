@@ -3,7 +3,7 @@ from rest_framework import viewsets, status
 from rest_framework import serializers
 from rest_framework.response import Response
 from django.contrib.auth.models import Group, Permission
-from .serializers import GroupSerializer, PermissionSerializer
+from .serializers import GroupSerializer, PermissionSerializer,GroupPermissionSerializer
 from rest_framework.views import APIView
 from collections import defaultdict
 from users.models import CustomUser
@@ -60,13 +60,7 @@ class PermissionListView(APIView):
         serializer = PermissionSerializer(permissions, many=True)
         return Response(serializer.data)
     
-class PermissionSerializer(serializers.ModelSerializer):
-    app_label = serializers.CharField(source='content_type.app_label', read_only=True)
-    model = serializers.CharField(source='content_type.model', read_only=True)
 
-    class Meta:
-        model = Permission
-        fields = ['id', 'codename', 'name', 'app_label', 'model']
 class GroupPermissionsView(APIView):
     """
     Listar los permisos de un grupo específico.
@@ -113,7 +107,7 @@ class UserPermissionsView(APIView):
 
         # Permisos de grupo del usuario
         group_permissions = Permission.objects.filter(group__user=user)
-        group_permissions_data = PermissionSerializer(group_permissions, many=True).data
+        group_permissions_data = GroupPermissionSerializer(group_permissions, many=True).data
 
         # Combinar y eliminar duplicados (si es necesario)
         all_permissions = direct_permissions | group_permissions
@@ -123,4 +117,4 @@ class UserPermissionsView(APIView):
             "direct_permissions": direct_permissions_data,
             "group_permissions": group_permissions_data,
             "all_permissions": all_permissions_data
-        })    
+        })  

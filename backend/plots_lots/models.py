@@ -41,4 +41,55 @@ class Plot(models.Model):
         super().save(*args, **kwargs)    
     def __str__(self):
         return f"{self.plot_name} (ID: {self.id_plot})"
+    
+class SoilType(models.Model):
+    name = models.CharField(max_length=50, unique=True, verbose_name="Tipo de suelo")
+    
+    class Meta:
+        verbose_name = "Tipo de suelo"
+        verbose_name_plural = "Tipos de suelo"
+    
+    def __str__(self):
+        return self.name    
+    
+class Lot(models.Model):
+    plot = models.ForeignKey(Plot, on_delete=models.CASCADE, related_name="lotes", verbose_name="Predio")
+    id_lot = models.CharField(primary_key=True, max_length=15, unique=True, editable=False, verbose_name="ID de lote")  # Campo para almacenar el ID único
+    crop_type = models.CharField(max_length=20, null=False, blank=False, verbose_name="Tipo de cultivo")
+    crop_variety = models.CharField(max_length=20, null=True, blank=True, verbose_name="Variedad del cultivo")
+    soil_type = models.ForeignKey(SoilType, on_delete=models.CASCADE, verbose_name="Tipo de suelo")
+    is_activate = models.BooleanField(default=True, help_text="Indica si el lote esta habilitado", db_index=True, verbose_name="estado lote")
+    registration_date = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de registro")
+    
+    class Meta:
+        verbose_name = "Lote"
+        verbose_name_plural = "Lotes"
+    
+    def __str__(self):
+        return f"Lote {self.id_lot} en {self.plot.plot_name} - {self.crop_type}"
+    
+    def save(self, *args, **kwargs):
+        # Generar el id_lot solo si no existe aún
+        if not self.id_lot:
+            # Obtener el id_plot del predio asociado
+            id_plot = self.plot.id_plot  # Ejemplo: "PR-1234567"
+            
+            # Eliminar el prefijo "PR-" del id_plot
+            id_plot_sin_prefijo = id_plot.replace("PR-", "")  # Resultado: "1234567"
+            
+            # Obtener el número de lotes ya existentes para este predio
+            lotes_del_predio = Lot.objects.filter(plot=self.plot).count()
+            
+            # Generar el número secuencial (inicia en 1)
+            numero_secuencial = lotes_del_predio + 1
+            
+            # Formatear el número secuencial con 3 dígitos (001, 002, etc.)
+            numero_formateado = f"{numero_secuencial:03}"
+            
+            # Crear el id_lot combinando id_plot sin prefijo y el número secuencial
+            self.id_lot = f"{id_plot_sin_prefijo}-{numero_formateado}"  # Resultado: "1234567-001"
         
+        # Guardar el objeto
+        super().save(*args, **kwargs)     
+    
+    
