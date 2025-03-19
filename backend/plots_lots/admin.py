@@ -12,7 +12,7 @@ class PlotAdmin(admin.ModelAdmin):
     readonly_fields = ('id_plot',)  # 🔹 Agregar esto
 @admin.register(SoilType)
 class SoilTypeAdmin(admin.ModelAdmin):
-    list_display = ('name',)
+    list_display = ('id','name')
 
 @admin.register(Lot)
 class LotAdmin(admin.ModelAdmin):

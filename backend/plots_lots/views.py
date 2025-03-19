@@ -1,138 +1,162 @@
-from rest_framework import viewsets
-from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated,IsAdminUser
+from rest_framework import viewsets, generics, status, response
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework import status
-from .models import Plot,Lot
-from .serializers import PlotSerializer,LotSerializer,LotActivationSerializer,PlotDetailSerializer
+from .models import Plot, Lot,SoilType
+from .serializers import (
+    PlotSerializer, PlotDetailSerializer,
+    LotSerializer, LotDetailSerializer,
+    SoilTypeSerializer
+)
 from .permissions import IsOwnerOrAdmin
 
-class PlotViewSet(viewsets.ModelViewSet):
-    queryset = Plot.objects.all()
-    serializer_class = PlotSerializer
+class BaseModelViewSet(viewsets.ModelViewSet):
+    """
+    Vista base que implementa funcionalidad común para predios y lotes.
+    
+    Proporciona:
+    - Permisos basados en autenticación y propiedad
+    - Filtrado de objetos por usuario
+    - Activación/desactivación de objetos
+    """
     permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
+    model_name = ""  # Debe ser definido en las clases hijas
 
     def get_queryset(self):
         """
-        Retorna todos los predios para administradores,
-        o solo los predios del usuario para usuarios normales.
+        Retorna todos los objetos para administradores,
+        o solo los objetos del usuario para usuarios normales.
         """
-        if self.request.user.is_staff:
-            return Plot.objects.all()
-        return Plot.objects.filter(owner=self.request.user)
+        queryset = self.queryset
+        if not self.request.user.is_staff:
+            queryset = self.get_user_queryset()
+        return queryset.order_by('-registration_date')
+
+    def get_user_queryset(self):
+        """
+        Debe ser implementado por las clases hijas para filtrar
+        objetos específicos del usuario.
+        """
+        raise NotImplementedError("Las clases hijas deben implementar get_user_queryset")
 
     def perform_update(self, serializer):
         """ Validar que el usuario no envíe los mismos datos al actualizar """
         instance = self.get_object()
         data = serializer.validated_data
 
-        # Verifica si los datos enviados son iguales a los actuales
         has_changes = any(
             getattr(instance, field) != value for field, value in data.items()
         )
 
         if not has_changes:
-            raise Exception("No se detectaron cambios en los datos del predio, modifique al menos un campo para actualizar.")
+            raise ValueError(f"No se detectaron cambios en los datos del {self.model_name}")
 
-        serializer.save()
+        return serializer.save()
 
     def update(self, request, *args, **kwargs):
-        """ Manejo de errores en actualización con PUT y respuesta de éxito """
         try:
             response = super().update(request, *args, **kwargs)
-            return Response({"success": "Actualización exitosa.", "data": response.data}, status=status.HTTP_200_OK)
+            return Response({
+                "mensaje": f"{self.model_name} actualizado exitosamente",
+                "data": response.data
+            }, status=status.HTTP_200_OK)
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            if str(e) == "No se detectaron cambios en los datos del predio, modifique al menos un campo para actualizar.":
-                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-            return Response({"error": "Error en la actualización del predio, por favor intente más tarde."}, 
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({
+                "error": f"Error al actualizar el {self.model_name}",
+                "detalles": str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-    def partial_update(self, request, *args, **kwargs):
-        """ Manejo de errores en actualización con PATCH y respuesta de éxito """
-        try:
-            response = super().partial_update(request, *args, **kwargs)
-            return Response({"success": "Actualización exitosa.", "data": response.data}, status=status.HTTP_200_OK)
-        except Exception as e:
-            if str(e) == "No se detectaron cambios en los datos del predio, modifique al menos un campo para actualizar.":
-                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-            return Response({"error": "Error en la actualización del predio, por favor intente más tarde."}, 
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    def toggle_active(self, request, *args, **kwargs):
+        """
+        Activa o desactiva un objeto.
+        """
+        instance = self.get_object()
+        action = kwargs.get('activate', True)
+        
+        if instance.is_activate == action:
+            status_text = "activado" if action else "desactivado"
+            return Response({
+                "error": f"El {self.model_name} ya está {status_text}"
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-    def inactive(self, request, pk=None):
-        """ Inhabilita un predio cambiando is_activate a False """
-        try:
-            predio = self.get_queryset().filter(id_plot=pk).first()
-            
-            if not predio:
-                return Response({"error": "Predio no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+        instance.is_activate = action
+        instance.save()
+        
+        status_text = "activado" if action else "desactivado"
+        return Response({
+            "mensaje": f"{self.model_name} {status_text} exitosamente",
+            "data": self.get_serializer(instance).data
+        }, status=status.HTTP_200_OK)
 
-            if not predio.is_activate:
-                return Response({"error": "El predio ya está inhabilitado."}, status=status.HTTP_400_BAD_REQUEST)
+    def list(self, request, *args, **kwargs):
+        """
+        Lista los objetos, filtrando por usuario si no es admin.
+        """
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
-            predio.is_activate = False
-            predio.save()
-            return Response({"success": "Predio inhabilitado exitosamente."}, status=status.HTTP_200_OK)
+class PlotViewSet(BaseModelViewSet):
+    """
+    ViewSet para gestionar predios.
+    """
+    queryset = Plot.objects.all()
+    serializer_class = PlotSerializer
+    model_name = "Predio"
+    lookup_field = 'id_plot'
+    lookup_url_kwarg = 'id_plot'
 
-        except Exception as e:
-            return Response({"error": f"No se pudo inhabilitar el predio: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return PlotDetailSerializer
+        return PlotSerializer
 
-    def active(self, request, pk=None):
-        """ Habilita un predio cambiando is_activate a True """
-        try:
-            predio = self.get_object()
-            if predio.is_activate:
-                return Response({"error": "El predio ya está habilitado."}, status=status.HTTP_400_BAD_REQUEST)
+    def get_user_queryset(self):
+        return Plot.objects.filter(owner=self.request.user)
 
-            predio.is_activate = True
-            predio.save()
-            return Response({"success": "Predio habilitado exitosamente."}, status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response({"error": "No se pudo habilitar el predio."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    def inactive(self, request, *args, **kwargs):
+        return self.toggle_active(request, *args, activate=False)
 
-class LotCreateView(generics.CreateAPIView):
+    def active(self, request, *args, **kwargs):
+        return self.toggle_active(request, *args, activate=True)
+
+class LotViewSet(BaseModelViewSet):
+    """
+    ViewSet para gestionar lotes.
+    """
     queryset = Lot.objects.all()
     serializer_class = LotSerializer
-    permission_classes = [IsAuthenticated, IsAdminUser]     
+    model_name = "Lote"
+    lookup_field = 'id_lot'
+    lookup_url_kwarg = 'id_lot'
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return LotDetailSerializer
+        return LotSerializer
+
+    def get_user_queryset(self):
+        return Lot.objects.filter(plot__owner=self.request.user)
+
+    def inactive(self, request, *args, **kwargs):
+        return self.toggle_active(request, *args, activate=False)
+
+    def active(self, request, *args, **kwargs):
+        return self.toggle_active(request, *args, activate=True)
+
+class SoilTypeListCreateView(generics.ListCreateAPIView):
+    queryset = SoilType.objects.all()
+    serializer_class = SoilTypeSerializer
+    permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
+
+
+class SoilTypeRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = SoilType.objects.all()
+    serializer_class = SoilTypeSerializer  
+    permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
     
-class ActivateLotView(generics.UpdateAPIView):
-    queryset = Lot.objects.all()
-    serializer_class = LotActivationSerializer
-    lookup_field = 'id_lot'  # Usamos el campo id_lot para buscar el lote
-    permission_classes = [IsAuthenticated,IsAdminUser]
-
-    def patch(self, request, *args, **kwargs):
-        instance = self.get_object()  # Obtiene el lote por id_lot
-        instance.is_activate = True  # Activa el lote
-        instance.save()  # Guarda los cambios
-
-        return Response(
-            {
-                "message": f"Lote {instance.id_lot} activado correctamente.",
-                "data": {"is_activate": True}
-            },
-            status=status.HTTP_200_OK
-        )    
-
-class DeactivateLotView(generics.UpdateAPIView):
-    queryset = Lot.objects.all()
-    serializer_class = LotActivationSerializer
-    lookup_field = 'id_lot'  # Usamos el campo id_lot para buscar el lote
-    permission_classes = [IsAuthenticated,IsAdminUser]
-    def patch(self, request, *args, **kwargs):
-        instance = self.get_object()  # Obtiene el lote por id_lot
-        instance.is_activate = False  # Desactiva el lote
-        instance.save()  # Guarda los cambios
-
-        return Response(
-            {
-                "message": f"Lote {instance.id_lot} desactivado correctamente.",
-                "data": {"is_activate": False}
-            },
-            status=status.HTTP_200_OK
-        )  
-    
-class PlotDetailView(generics.RetrieveAPIView):
-    queryset = Plot.objects.all()
-    serializer_class = PlotDetailSerializer
-    lookup_field = 'id_plot'  # Usamos el campo id_plot para buscar el predio     
-    [IsAuthenticated,IsAdminUser]
+    def delete(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return response.Response({"message": "Eliminado exitosamente"}, status=status.HTTP_200_OK)
