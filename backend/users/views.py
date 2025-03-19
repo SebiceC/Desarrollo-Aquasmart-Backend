@@ -15,6 +15,8 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework import serializers
 from users.models import CustomUser
 
+from django.contrib.auth.models import Permission
+from django.shortcuts import get_object_or_404
 @extend_schema_view(
     post=extend_schema(
         summary="Crear un nuevo usuario",
@@ -339,6 +341,19 @@ class AdminUserUpdateAPIView(generics.RetrieveUpdateAPIView):
             }, status=status.HTTP_200_OK)
         
         return response
+class UserDetailsView(generics.RetrieveAPIView):
+    """
+    Vista para obtener el perfil de usuario según el documento proporcionado en la URL.
+    """
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated,IsAdminUser]  # Requiere autenticación para acceder
+
+    def get_object(self):
+        """
+        Obtiene el usuario a partir del documento proporcionado en la URL.
+        """
+        document = self.kwargs.get('document')
+        return get_object_or_404(CustomUser, document=document)    
 
 class UserProfilelView(generics.RetrieveAPIView):
     serializer_class = UserProfileSerializer

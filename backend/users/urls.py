@@ -1,6 +1,8 @@
 from django.urls import path
 from .views import CustomUserCreateView, CustomUserListView,UserRegisterAPIView, DocumentTypeView, PersonTypeView, UserInactiveAPIView,UserProfilelView,DocumentTypeListView,PersonTypeListView, AdminUserUpdateAPIView, UserProfileUpdateView, UserActivateAPIView, AssignPermissionToUser, RemovePermissionFromUser, ListUserPermissions
 from .authentication import GenerateOtpPasswordRecoveryView,ResetPasswordView,ValidateOtpView, LoginView, LogoutView, ValidateTokenView, ChangePasswordView
+from .views import CustomUserCreateView, CustomUserListView,UserRegisterAPIView, DocumentTypeView, PersonTypeView, UserInactiveAPIView,UserProfilelView,DocumentTypeListView,PersonTypeListView, AdminUserUpdateAPIView, UserProfileUpdateView, UserActivateAPIView, AssignPermissionToUser, RemovePermissionFromUser, ListUserPermissions, UserDetailsView
+from .authentication import GenerateOtpPasswordRecoveryView,ResetPasswordView,ValidateOtpView, LoginView, LogoutView, ValidateTokenView, ChangePasswordView,GenerateOtpLoginView
 
 
 urlpatterns = [
@@ -27,4 +29,5 @@ urlpatterns = [
     path('custom-permissions/assign/', AssignPermissionToUser.as_view(), name='assign-permission'),
     path('custom-permissions/remove/', RemovePermissionFromUser.as_view(), name='remove-permission'),
     path('custom-permissions/user/<str:document>/', ListUserPermissions.as_view(), name='user-permissions'),
+    path('details/<str:document>', UserDetailsView.as_view(), name='user-details'),
 ]

@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated,IsAdminUser
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Plot,Lot
-from .serializers import PlotSerializer,LotSerializer,LotActivationSerializer
+from .serializers import PlotSerializer,LotSerializer,LotActivationSerializer,PlotDetailSerializer
 from .permissions import IsOwnerOrAdmin
 
 class PlotViewSet(viewsets.ModelViewSet):
@@ -129,4 +129,10 @@ class DeactivateLotView(generics.UpdateAPIView):
                 "data": {"is_activate": False}
             },
             status=status.HTTP_200_OK
-        )    
+        )  
+    
+class PlotDetailView(generics.RetrieveAPIView):
+    queryset = Plot.objects.all()
+    serializer_class = PlotDetailSerializer
+    lookup_field = 'id_plot'  # Usamos el campo id_plot para buscar el predio     
+    [IsAuthenticated,IsAdminUser]

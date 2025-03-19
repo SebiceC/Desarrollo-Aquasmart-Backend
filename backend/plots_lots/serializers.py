@@ -31,7 +31,7 @@ class PlotSerializer(serializers.ModelSerializer):
 class LotSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lot
-        fields = ['id_lot', 'plot', 'crop_type', 'crop_variety', 'soil_type', 'is_activate']
+        fields = ['id_lot', 'plot', 'crop_type', 'crop_variety', 'soil_type', 'is_activate','registration_date']
         read_only_fields = ['id_lot']  # id_lot se genera automáticamente, no debe ser enviado por el usuario
 
     def validate_plot(self, value):
@@ -56,3 +56,14 @@ class LotActivationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lot
         fields = ['is_activate']  # Solo permitimos actualizar este campo    
+
+class PlotDetailSerializer(serializers.ModelSerializer):
+    lotes = LotSerializer(many=True, read_only=True)  # Incluye los lotes relacionados
+
+    class Meta:
+        model = Plot
+        fields = [
+            'id_plot', 'owner', 'plot_name', 'latitud', 'longitud', 'plot_extension',
+            'registration_date', 'is_activate', 'lotes'
+        ]        
+        

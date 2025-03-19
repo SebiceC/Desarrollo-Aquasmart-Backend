@@ -56,7 +56,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
             'document_type', 'person_type', 'phone', 'address',
             'password', 'is_registered', 'is_active','date_joined','drive_folder_id','files'
         ]
-        read_only_fields = ('is_registered', 'is_active','drive_folder_id','date_joined')
+        read_only_fields = ('is_registered','drive_folder_id','date_joined')
         
         extra_kwargs = {
             'document': {'validators': []},
@@ -472,7 +472,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = [
             'email', 'document', 'document_type_name', 
             'first_name', 'last_name', 'phone', 
-            'address', 'person_type_name'
+            'address', 'person_type_name','drive_folder_id'
         ] 
         
 class UserProfileUpdateSerializer(serializers.ModelSerializer):
