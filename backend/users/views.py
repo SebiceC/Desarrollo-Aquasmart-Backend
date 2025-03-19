@@ -13,8 +13,6 @@ from django.conf import settings
 from .permissions import PuedeCambiarIsActive,CanRegister,CanAddDocumentType
 from rest_framework.authentication import TokenAuthentication
 from rest_framework import serializers
-
-
 from django.contrib.auth.models import Permission
 from django.shortcuts import get_object_or_404
 @extend_schema_view(
