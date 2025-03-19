@@ -1,6 +1,7 @@
 from django.urls import path
-from .views import CustomUserCreateView, CustomUserListView,UserRegisterAPIView, DocumentTypeView, PersonTypeView, UserInactiveAPIView,UserProfilelView,DocumentTypeListView,PersonTypeListView, AdminUserUpdateAPIView, UserProfileUpdateView, UserActivateAPIView, AssignPermissionToUser, RemovePermissionFromUser, ListUserPermissions
-from .authentication import GenerateOtpPasswordRecoveryView,ResetPasswordView,ValidateOtpView, LoginView, LogoutView, ValidateTokenView, ChangePasswordView
+from .views import CustomUserCreateView, CustomUserListView,UserRegisterAPIView, DocumentTypeView, PersonTypeView, UserInactiveAPIView,UserProfilelView,DocumentTypeListView,PersonTypeListView, AdminUserUpdateAPIView, UserProfileUpdateView, UserActivateAPIView, AssignPermissionToUser, RemovePermissionFromUser, ListUserPermissions, UserDetailsView
+from .authentication import GenerateOtpPasswordRecoveryView,ResetPasswordView,ValidateOtpView, LoginView, LogoutView, ValidateTokenView, ChangePasswordView,GenerateOtpLoginView
+
 
 urlpatterns = [
     path('admin/listed', CustomUserListView.as_view(), name='customuser-list'),  # Listar usuarios
