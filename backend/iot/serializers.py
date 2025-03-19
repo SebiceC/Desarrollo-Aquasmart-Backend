@@ -1,11 +1,13 @@
 from rest_framework import serializers
 from .models import IoTDevice
-from plots_lots.models import Plot, Lot  # Asegúrate de importar correctamente los modelos
+from plots_lots.models import Plot, Lot  
 
 class IoTDeviceSerializer(serializers.ModelSerializer):
+    device_id = serializers.CharField(read_only=True) 
+
     class Meta:
         model = IoTDevice
-        fields = ['id_plot', 'id_lot', 'name', 'device_type', 'is_active', 'characteristics']
+        fields = ['id_plot', 'id_lot', 'name', 'device_type', 'is_active', 'characteristics', 'device_id']
 
     def validate_name(self, value):
         """ Validación para asegurar que el nombre no esté vacío """
@@ -30,11 +32,11 @@ class IoTDeviceSerializer(serializers.ModelSerializer):
         if data.get('id_lot') and not Lot.objects.filter(id_lot=data['id_lot']).exists():
             raise serializers.ValidationError("El lote con el ID proporcionado no existe.")
 
-        # Validar que no haya dispositivos del mismo tipo en el mismo predio
-        if data.get('id_plot'):
-            # Buscar dispositivos en el predio con el mismo tipo de dispositivo
-            if IoTDevice.objects.filter(id_plot=data['id_plot'], device_type=data['device_type']).exists():
-                raise serializers.ValidationError(f"Ya existe un dispositivo del tipo {data['device_type']} registrado en este predio.")
+        # Validar que no haya más de un dispositivo del mismo tipo por lote
+        if data.get('id_lot'):
+            # Buscar dispositivos en el lote con el mismo tipo de dispositivo
+            if IoTDevice.objects.filter(id_lot=data['id_lot'], device_type=data['device_type']).exists():
+                raise serializers.ValidationError(f"Ya existe un dispositivo {data['device_type']} en este lote.")
 
         # Validar que el estado sea correcto
         if data.get('is_active') not in [True, False]:
