@@ -24,15 +24,15 @@ class IoTDevice(models.Model):
         return f"{self.name} ({self.device_type})"
 
     def save(self, *args, **kwargs):
-        # Generar un ID único basado en el tipo de dispositivo
+        # Generar un ID único solo si el dispositivo es nuevo (no tiene device_id)
         if not self.device_id:
             prefix = "01" if self.device_type == "caudalimetro" else "02"  # 01 para caudalimetro, 02 para electrovalvula
             random_number = random.randint(1000, 9999)  # Generar número aleatorio de 4 dígitos
             self.device_id = f"{prefix}-{random_number}"
-        
-        # Asegurarse de que el ID del dispositivo sea único
-        while IoTDevice.objects.filter(device_id=self.device_id).exists():
-            random_number = random.randint(1000, 9999)
-            self.device_id = f"{prefix}-{random_number}"
+            
+            # Asegurarse de que el ID del dispositivo sea único
+            while IoTDevice.objects.filter(device_id=self.device_id).exists():
+                random_number = random.randint(1000, 9999)
+                self.device_id = f"{prefix}-{random_number}"
 
         super().save(*args, **kwargs)  # Guardar el dispositivo con el ID generado
