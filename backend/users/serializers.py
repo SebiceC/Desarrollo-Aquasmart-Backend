@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
 from API.sendmsn import send_email2
-from .models import DocumentType, PersonType, CustomUser, LoginHistory, Otp,UserUpdateLog
+from .models import DocumentType, PersonType, CustomUser, Otp, UserUpdateLog, LoginRestriction
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth.password_validation import validate_password
 from .validate import validate_user_exist,validate_otp,validate_create_user_email,validate_create_user_document,validate_user_password,validate_only_number_phone,validate_user_current_password
@@ -9,11 +9,12 @@ from rest_framework.exceptions import NotFound,PermissionDenied
 from django.contrib.auth.signals import user_logged_in
 from django.utils import timezone
 from django.core.exceptions import ValidationError as DjangoValidationError
-from .models import LoginRestriction
 from rest_framework.authtoken.models import Token
 from API.google.google_drive import create_folder, share_folder
 import os
 import re
+from auditlog.models import LogEntry
+
 class DocumentTypeSerializer(serializers.ModelSerializer):
     """
     Serializer para el modelo DocumentType.
@@ -96,15 +97,14 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
         return user
 
-class LoginHistorySerializer(serializers.ModelSerializer):
+class LogEntrySerializer(serializers.ModelSerializer):
     """
-    Serializer para el modelo LoginHistory.
-    Almacena los registros de inicio de sesión de los usuarios.
+    Serializer para el modelo LogEntry de auditlog.
     """
     class Meta:
-        model = LoginHistory
-        fields = ['timestamp', 'user']
-        
+        model = LogEntry
+        fields = ['timestamp', 'actor', 'action', 'changes', 'remote_addr']
+
 class LoginSerializer(serializers.Serializer):
     """
     Serializer para la autenticación de usuarios mediante documento y contraseña.

@@ -55,7 +55,7 @@ INSTALLED_APPS = [
     'iot',
     'plots_lots',
     "AquaSmart",
-    
+    'auditlog',
 ]
 
 AUTH_USER_MODEL ='users.CustomUser'
@@ -66,6 +66,7 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'auditlog.middleware.AuditlogMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -304,3 +305,6 @@ DEFAULT_FILE_STORAGE = 'storages.backends.google_drive.GoogleDriveStorage'
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
+
+AUDITLOG_INCLUDE_ADMIN = True
+AUDITLOG_EXCLUDE_TRACKING = []

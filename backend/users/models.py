@@ -4,6 +4,8 @@ from django.utils.timezone import now, timedelta
 from datetime import datetime,date
 import secrets
 import string
+from auditlog.registry import auditlog
+from auditlog.models import LogEntry
 
 class UserManager(BaseUserManager):
     """
@@ -168,21 +170,6 @@ class PersonType(models.Model):
     def __str__(self):
         return f"{self.personTypeId} - {self.typeName}"
     
-class LoginHistory(models.Model):
-    """
-    Modelo para registrar el historial de inicio de sesión de los usuarios.
-    """
-
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='login_history', verbose_name="Usuario")
-    timestamp = models.DateTimeField(default=now, verbose_name="Fecha y Hora de Inicio de Sesión")
-
-    def __str__(self):
-        return f"{self.user.document} - {self.timestamp}"
-
-    class Meta:
-        verbose_name = "Historial de Inicio de Sesión"
-        verbose_name_plural = "Historiales de Inicio de Sesión"         
-
 class LoginRestriction(models.Model):
     user = models.ForeignKey(
         CustomUser, 
@@ -280,3 +267,10 @@ class UserUpdateLog(models.Model):
         self.update_count += 1
         self.last_update_date = date.today()
         self.save()
+
+# Registrar modelos para auditoría
+auditlog.register(CustomUser)  # El registro de campos excluidos se maneja de otra manera
+auditlog.register(DocumentType)
+auditlog.register(PersonType)
+auditlog.register(LoginRestriction)
+auditlog.register(UserUpdateLog)
