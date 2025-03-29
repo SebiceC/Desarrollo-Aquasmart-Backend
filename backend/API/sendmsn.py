@@ -75,15 +75,16 @@ def send_email2(email, otp_generado, purpose, name):
         return "Correo enviado exitosamente"
     except Exception as e:
         return f"Error al enviar correo: {e}"
-    
+
+
 def send_rejection_email(email, mensaje_rechazo, name):
     """
     Envía un correo notificando el rechazo de una solicitud con el mensaje personalizado enviado por el usuario.
     """
     asunto = "❌ Notificación de Rechazo"
-    
+
     mensaje_texto = f"{mensaje_rechazo}"  # El usuario define completamente el mensaje
-    
+
     mensaje_html = f"""
     <html>
     <body style="font-family: Arial, sans-serif; text-align: center; padding: 20px;">
@@ -103,26 +104,31 @@ def send_rejection_email(email, mensaje_rechazo, name):
             from_email=settings.EMAIL_HOST_USER,
             recipient_list=[email],
             fail_silently=False,
-            html_message=mensaje_html  # Mensaje en HTML
+            html_message=mensaje_html,  # Mensaje en HTML
         )
         return "Correo de rechazo enviado exitosamente"
     except Exception as e:
-        return f"Error al enviar correo de rechazo: {e}"    
-    
-def send_approval_email(email, name, login_link="https://desarrollo-aqua-smart-frontend-six.vercel.app/login" ):
+        return f"Error al enviar correo de rechazo: {e}"
+
+
+def send_approval_email(
+    email,
+    name,
+    login_link="https://desarrollo-aqua-smart-frontend-six.vercel.app/login",
+):
     """
     Envía un correo notificando la aprobación del pre-registro con un enlace para iniciar sesión.
     """
     asunto = "✅ Pre-registro Aprobado - Acceda a su Cuenta"
-    
+
     mensaje_texto = f"""
     ¡Felicidades! Su pre-registro ha sido aprobado.
-    
+
     Ahora puede acceder a su cuenta utilizando el siguiente enlace: {login_link}
-    
+
     Si tiene problemas para iniciar sesión, no dude en contactarnos.
     """
-    
+
     mensaje_html = f"""
     <html>
     <body style="font-family: Arial, sans-serif; text-align: center; padding: 20px;">
@@ -130,7 +136,7 @@ def send_approval_email(email, name, login_link="https://desarrollo-aqua-smart-f
         <p style="font-size: 18px;">Hola {name},</p>
         <p style="font-size: 16px;">¡Felicidades! Su pre-registro ha sido aprobado.</p>
         <p style="font-size: 16px;">Ahora puede acceder a su cuenta utilizando el siguiente enlace:</p>
-        <a href="{login_link}" 
+        <a href="{login_link}"
            style="display: inline-block; background-color: #28A745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-size: 18px;">
            Iniciar Sesión
         </a>
@@ -146,8 +152,8 @@ def send_approval_email(email, name, login_link="https://desarrollo-aqua-smart-f
             from_email=settings.EMAIL_HOST_USER,
             recipient_list=[email],
             fail_silently=False,
-            html_message=mensaje_html  # Mensaje en HTML
+            html_message=mensaje_html,  # Mensaje en HTML
         )
         return "Correo de aprobación enviado exitosamente"
     except Exception as e:
-        return f"Error al enviar correo de aprobación: {e}"    
+        return f"Error al enviar correo de aprobación: {e}"

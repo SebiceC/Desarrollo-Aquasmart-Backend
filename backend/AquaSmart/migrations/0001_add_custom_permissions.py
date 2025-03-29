@@ -2,11 +2,14 @@
 
 from django.db import migrations
 
+
 def crear_permisos(apps, schema_editor):
     Permission = apps.get_model("auth", "Permission")
     ContentType = apps.get_model("contenttypes", "ContentType")
 
-    content_type, created = ContentType.objects.get_or_create(model="aquasmart_permission", app_label="aquasmart")
+    content_type, created = ContentType.objects.get_or_create(
+        model="aquasmart_permission", app_label="AquaSmart"
+    )
 
     permisos = [
         ("ver_pre_registros", "Permite visualizar los pre-registros"),
@@ -19,16 +22,37 @@ def crear_permisos(apps, schema_editor):
         ("asignar_roles_asignados", "Permite asignar roles a los usuarios"),
         ("quitar_roles_asignados", "Permite quitar roles asignados"),
         ("ver_datos_personales", "Permite visualizar datos personales del usuario"),
-        ("actualizar_datos_personales", "Permite actualizar datos personales del usuario"),
+        (
+            "actualizar_datos_personales",
+            "Permite actualizar datos personales del usuario",
+        ),
         ("eliminar_datos_personales", "Permite eliminar datos personales del usuario"),
         ("agregar_datos_personales", "Permite agregar datos personales del usuario"),
-        ("visualizar_usuarios_distrito", "Permite visualizar todos los usuarios del distrito"),
-        ("ver_info_usuarios_distrito", "Permite ver la información detallada de los usuarios"),
-        ("actualizar_info_usuarios_distrito", "Permite actualizar la información de los usuarios"),
-        ("eliminar_info_usuarios_distrito", "Permite eliminar información de los usuarios"),
-        ("agregar_info_usuarios_distrito", "Permite agregar información de los usuarios"),        
-        ("ver_predios_distrito", "Permite visualizar los predios registrados en el distrito"),
-        ("ver_predios_user", "Permite visualizar sus propios predios"),  
+        (
+            "visualizar_usuarios_distrito",
+            "Permite visualizar todos los usuarios del distrito",
+        ),
+        (
+            "ver_info_usuarios_distrito",
+            "Permite ver la información detallada de los usuarios",
+        ),
+        (
+            "actualizar_info_usuarios_distrito",
+            "Permite actualizar la información de los usuarios",
+        ),
+        (
+            "eliminar_info_usuarios_distrito",
+            "Permite eliminar información de los usuarios",
+        ),
+        (
+            "agregar_info_usuarios_distrito",
+            "Permite agregar información de los usuarios",
+        ),
+        (
+            "ver_predios_distrito",
+            "Permite visualizar los predios registrados en el distrito",
+        ),
+        ("ver_predios_user", "Permite visualizar sus propios predios"),
         ("registrar_info_predios", "Permite registrar información de predios"),
         ("eliminar_info_predios", "Permite eliminar información de predios"),
         ("actualizar_info_predios", "Permite actualizar información de predios"),
@@ -36,49 +60,114 @@ def crear_permisos(apps, schema_editor):
         ("ingresar_tarifas_cobro", "Permite ingresar nuevas tarifas de cobro"),
         ("modificar_tarifas_cobro", "Permite modificar tarifas de cobro existentes"),
         ("eliminar_tarifas_cobro", "Permite eliminar tarifas de cobro"),
-        ("ver_historial_consumo_general_distrito", "Permite ver el historial de consumo general del distrito"),
-        ("ver_historial_consumo_predios", "Permite ver el historial de consumo de los predios"),
-        ("ver_historial_consumo_lotes", "Permite ver el historial de consumo de los lotes"),
-        ("ver_historial_consumo_predios_individuales", "Permite ver el historial de consumo de un predio específico"),
-        ("ver_historial_consumo_lotes_individuales", "Permite ver el historial de consumo de un lote específico"),
+        (
+            "ver_historial_consumo_general_distrito",
+            "Permite ver el historial de consumo general del distrito",
+        ),
+        (
+            "ver_historial_consumo_predios",
+            "Permite ver el historial de consumo de los predios",
+        ),
+        (
+            "ver_historial_consumo_lotes",
+            "Permite ver el historial de consumo de los lotes",
+        ),
+        (
+            "ver_historial_consumo_predios_individuales",
+            "Permite ver el historial de consumo de un predio específico",
+        ),
+        (
+            "ver_historial_consumo_lotes_individuales",
+            "Permite ver el historial de consumo de un lote específico",
+        ),
         ("generar_facturas_cobro", "Permite generar facturas de cobro"),
         ("enviar_facturas_cobro", "Permite enviar facturas de cobro a los usuarios"),
-        ("descargar_facturas_distrito_pdf", "Permite descargar facturas del distrito en formato PDF"),
-        ("ver_historial_facturas_usuarios", "Permite ver el historial de facturación de los usuarios"),
+        (
+            "descargar_facturas_distrito_pdf",
+            "Permite descargar facturas del distrito en formato PDF",
+        ),
+        (
+            "ver_historial_facturas_usuarios",
+            "Permite ver el historial de facturación de los usuarios",
+        ),
         ("pagar_online_pse", "Permite realizar pagos en línea mediante PSE"),
         ("ver_facturas_pagadas", "Permite ver las facturas pagadas"),
         ("ver_facturas_vencidas", "Permite ver las facturas vencidas"),
-        ("solicitar_aumentar_caudal_lote","Permite solicitar el aumento del caudal para un lote"),        
-        ("solicitar_prediccion_de_consumo","Permite solicitar predicciones de consumo"),        
-        ("ver_solicitudes_prediccion_cultivos_distrito","Permite ver las solicitudes de predicción de consumo realizadas por los usuarios"),
-        ("ver_solicitudes_prediccion_cultivos_individual","Permite ver las solicitudes de predicción de consumo realizadas por el usuario actual"),
-        ("aceptar_solicitudes_prediccion_consumo_por_usuario","Permite aceptar las solicitudes de predicción de consumo realizadas por los usuarios"),
-        ("denegar_solicitudes_prediccion_consumo_por_usuario","Permite denegar las solicitudes de predicción de consumo realizadas por los usuarios"),
-        ("solicitar_limitar_caudal_lote", "Permite solicitar la limitación de caudal para un lote"),
+        (
+            "solicitar_aumentar_caudal_lote",
+            "Permite solicitar el aumento del caudal para un lote",
+        ),
+        (
+            "solicitar_prediccion_de_consumo",
+            "Permite solicitar predicciones de consumo",
+        ),
+        (
+            "ver_solicitudes_prediccion_cultivos_distrito",
+            "Permite ver las solicitudes de predicción de consumo realizadas por los usuarios",
+        ),
+        (
+            "ver_solicitudes_prediccion_cultivos_individual",
+            "Permite ver las solicitudes de predicción de consumo realizadas por el usuario actual",
+        ),
+        (
+            "aceptar_solicitudes_prediccion_consumo_por_usuario",
+            "Permite aceptar las solicitudes de predicción de consumo realizadas por los usuarios",
+        ),
+        (
+            "denegar_solicitudes_prediccion_consumo_por_usuario",
+            "Permite denegar las solicitudes de predicción de consumo realizadas por los usuarios",
+        ),
+        (
+            "solicitar_limitar_caudal_lote",
+            "Permite solicitar la limitación de caudal para un lote",
+        ),
         ("aumentar_caudal_predio", "Permite aumentar el caudal de un predio"),
         ("cortar_caudal_predio", "Permite cortar el caudal de un predio"),
         ("poner_caudal_predio", "Permite restablecer el caudal de un predio"),
-        ("generar_reportes_fallos_suministro", "Permite generar reportes de fallos en el suministro"),
-        ("ver_reportes_fallos_suministro", "Permite visualizar reportes de fallos en el suministro"),
-        ("eliminar_reportes_fallos_suministro", "Permite eliminar reportes de fallos en el suministro"),
-        ("modificar_reportes_fallos_suministro", "Permite modificar reportes de fallos en el suministro"),
+        (
+            "generar_reportes_fallos_suministro",
+            "Permite generar reportes de fallos en el suministro",
+        ),
+        (
+            "ver_reportes_fallos_suministro",
+            "Permite visualizar reportes de fallos en el suministro",
+        ),
+        (
+            "eliminar_reportes_fallos_suministro",
+            "Permite eliminar reportes de fallos en el suministro",
+        ),
+        (
+            "modificar_reportes_fallos_suministro",
+            "Permite modificar reportes de fallos en el suministro",
+        ),
         ("ver_informe_mantenimiento", "Permite ver informes de mantenimiento"),
         ("crear_informe_mantenimiento", "Permite crear informes de mantenimiento"),
-        ("eliminar_informe_mantenimiento", "Permite eliminar informes de mantenimiento"),
-        ("modificar_informe_mantenimiento", "Permite modificar informes de mantenimiento"),
-        ("descargar_inventario_iot", "Permite descargar el inventario de dispositivos IoT"),
+        (
+            "eliminar_informe_mantenimiento",
+            "Permite eliminar informes de mantenimiento",
+        ),
+        (
+            "modificar_informe_mantenimiento",
+            "Permite modificar informes de mantenimiento",
+        ),
+        (
+            "descargar_inventario_iot",
+            "Permite descargar el inventario de dispositivos IoT",
+        ),
     ]
 
     for codename, descripcion in permisos:
         Permission.objects.get_or_create(
-            codename=codename,
-            name=descripcion,
-            content_type=content_type
+            codename=codename, name=descripcion, content_type=content_type
         )
+
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("auth", "0012_alter_user_first_name_max_length"),  # Última migración de Django auth
+        (
+            "auth",
+            "0012_alter_user_first_name_max_length",
+        ),  # Última migración de Django auth
         ("contenttypes", "0002_remove_content_type_name"),
     ]
 

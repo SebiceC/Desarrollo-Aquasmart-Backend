@@ -4,23 +4,72 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='IoTDevice',
+            name="IoTDevice",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('predio', models.CharField(blank=True, max_length=10, null=True, verbose_name='ID del Predio')),
-                ('lote', models.CharField(blank=True, max_length=15, null=True, verbose_name='ID del Lote')),
-                ('nombre', models.CharField(max_length=100, verbose_name='Nombre del Dispositivo')),
-                ('tipo_dispositivo', models.CharField(choices=[('caudalimetro', 'Caudalimetro'), ('electrovalvula', 'Electrovalvula')], max_length=50, verbose_name='Tipo de Dispositivo')),
-                ('estado', models.CharField(choices=[('activo', 'Activo'), ('inactivo', 'Inactivo')], max_length=50, verbose_name='Estado del Dispositivo')),
-                ('caracteristicas', models.CharField(blank=True, max_length=30, null=True, verbose_name='Características del Dispositivo')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "predio",
+                    models.CharField(
+                        blank=True,
+                        max_length=10,
+                        null=True,
+                        verbose_name="ID del Predio",
+                    ),
+                ),
+                (
+                    "lote",
+                    models.CharField(
+                        blank=True, max_length=15, null=True, verbose_name="ID del Lote"
+                    ),
+                ),
+                (
+                    "nombre",
+                    models.CharField(
+                        max_length=100, verbose_name="Nombre del Dispositivo"
+                    ),
+                ),
+                (
+                    "tipo_dispositivo",
+                    models.CharField(
+                        choices=[
+                            ("caudalimetro", "Caudalimetro"),
+                            ("electrovalvula", "Electrovalvula"),
+                        ],
+                        max_length=50,
+                        verbose_name="Tipo de Dispositivo",
+                    ),
+                ),
+                (
+                    "estado",
+                    models.CharField(
+                        choices=[("activo", "Activo"), ("inactivo", "Inactivo")],
+                        max_length=50,
+                        verbose_name="Estado del Dispositivo",
+                    ),
+                ),
+                (
+                    "caracteristicas",
+                    models.CharField(
+                        blank=True,
+                        max_length=30,
+                        null=True,
+                        verbose_name="Características del Dispositivo",
+                    ),
+                ),
             ],
         ),
     ]

@@ -40,37 +40,38 @@ if RENDER_EXTERNAL_HOSTNAME:
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'corsheaders',
-    'drf_spectacular',
-    'storages',
-    'rest_framework.authtoken',
-    'rest_framework',
-    'users',
-    'iot',
-    'plots_lots',
-    "aquasmart",
-    'auditlog',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "corsheaders",
+    "drf_spectacular",
+    "storages",
+    "rest_framework.authtoken",
+    "rest_framework",
+    "users",
+    "iot",
+    "plots_lots",
+    "AquaSmart",
+    "auditlog",
+    "caudal",
 ]
 
 AUTH_USER_MODEL = "users.CustomUser"
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'auditlog.middleware.AuditlogMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "auditlog.middleware.AuditlogMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
 ROOT_URLCONF = "API.urls"
@@ -194,16 +195,6 @@ class SpecialCharValidator:
             "Tu contraseña debe contener al menos un carácter especial (como @, #, $, etc.)."
         )
 
-class ContainsDigitValidator:
-    """Valida que la contraseña contenga al menos un dígito."""
-    def validate(self, password, user=None):
-        if not any(char.isdigit() for char in password):
-            raise ValidationError("La contraseña debe contener al menos un dígito.")
-        
-    def get_help_text(self):
-        return _("Tu contraseña debe contener al menos un dígito.")
-
-# Luego, busca la sección AUTH_PASSWORD_VALIDATORS en tu settings.py y reemplázala con:
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -232,6 +223,12 @@ AUTH_PASSWORD_VALIDATORS = [
         },
     },
     {
+        "NAME": "API.settings.MaximumLengthValidator",  # Usa la ruta completa al módulo
+        "OPTIONS": {
+            "max_length": 20,
+        },
+    },
+    {
         "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
@@ -246,8 +243,17 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "API.settings.SpecialCharValidator",  # Usa la ruta completa al módulo
     },
-     {
+    {
         "NAME": "API.settings.ContainsDigitValidator",  # Usa la ruta completa al módulo
+    },
+    {
+        "NAME": "API.settings.UppercaseValidator",  # Usa la ruta completa al módulo
+    },
+    {
+        "NAME": "API.settings.LowercaseValidator",  # Usa la ruta completa al módulo
+    },
+    {
+        "NAME": "API.settings.SpecialCharValidator",  # Usa la ruta completa al módulo
     },
 ]
 
@@ -257,7 +263,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "es-CO"
 
-TIME_ZONE = 'America/Bogota'
+TIME_ZONE = "America/Bogota"
 
 USE_I18N = True
 

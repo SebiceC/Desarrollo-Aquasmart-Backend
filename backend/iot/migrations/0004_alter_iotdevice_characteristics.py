@@ -4,15 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('iot', '0003_rename_caracteristicas_iotdevice_characteristics_and_more'),
+        ("iot", "0003_rename_caracteristicas_iotdevice_characteristics_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='iotdevice',
-            name='characteristics',
-            field=models.CharField(blank=True, default='Sin características', max_length=300, verbose_name='Características del Dispositivo'),
+            model_name="iotdevice",
+            name="characteristics",
+            field=models.CharField(
+                blank=True,
+                default="Sin características",
+                max_length=300,
+                verbose_name="Características del Dispositivo",
+            ),
         ),
     ]

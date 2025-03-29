@@ -47,10 +47,11 @@ def normal_user(db, person_type):
         is_active=True,
         is_registered=True,
     )
-    user.set_password("SecurePass123")  # 🔹 Asegurar que la contraseña se guarde encriptada
+    user.set_password(
+        "SecurePass123"
+    )  # 🔹 Asegurar que la contraseña se guarde encriptada
     user.save()
     return user
-
 
 
 @pytest.fixture
@@ -62,10 +63,8 @@ def registered_plot(db, admin_user):
         is_activate=True,
         latitud=-74.00597,
         longitud=40.712776,
-        plot_extension=2000.75
+        plot_extension=2000.75,
     )
-
-
 
 
 @pytest.mark.django_db
@@ -76,55 +75,71 @@ def test_admin_can_update_plot(api_client, admin_user, registered_plot):
     login_url = reverse("login")
     login_data = {"document": admin_user.document, "password": "AdminPass123"}
     login_response = api_client.post(login_url, login_data)
-    assert login_response.status_code == status.HTTP_200_OK, f"Error en login: {login_response.data}"
+    assert (
+        login_response.status_code == status.HTTP_200_OK
+    ), f"Error en login: {login_response.data}"
 
     # 🔹 Paso 2: Obtener y validar OTP
     otp_instance = Otp.objects.filter(user=admin_user, is_login=True).first()
     otp_validation_url = reverse("validate-otp")
     otp_data = {"document": admin_user.document, "otp": otp_instance.otp}
     otp_response = api_client.post(otp_validation_url, otp_data)
-    assert otp_response.status_code == status.HTTP_200_OK, f"Error al validar OTP: {otp_response.data}"
+    assert (
+        otp_response.status_code == status.HTTP_200_OK
+    ), f"Error al validar OTP: {otp_response.data}"
     assert "token" in otp_response.data, "❌ No se recibió un token tras validar el OTP."
 
     # 🔹 Paso 3: Actualizar la información del predio
     token = otp_response.data["token"]
     headers = {"HTTP_AUTHORIZATION": f"Token {token}"}
-    update_plot_url = reverse("actualizar-predio", kwargs={"id_plot": registered_plot.id_plot})
+    update_plot_url = reverse(
+        "actualizar-predio", kwargs={"id_plot": registered_plot.id_plot}
+    )
 
     update_data = {
         "plot_name": "Predio Actualizado",
         "plot_extension": 2500.00,
     }
 
-    update_response = api_client.patch(update_plot_url, update_data, format="json", **headers)
-    assert update_response.status_code == status.HTTP_200_OK, f"Error al actualizar el predio: {update_response.data}"
+    update_response = api_client.patch(
+        update_plot_url, update_data, format="json", **headers
+    )
+    assert (
+        update_response.status_code == status.HTTP_200_OK
+    ), f"Error al actualizar el predio: {update_response.data}"
 
     # 🔹 Paso 4: Verificar que los datos fueron actualizados
     registered_plot.refresh_from_db()  # 🔥 Recargar la información desde la base de datos
-    assert registered_plot.plot_name == "Predio Actualizado", "❌ El nombre del predio no se actualizó."
-    assert registered_plot.plot_extension == 2500.00, "❌ La extensión del predio no se actualizó."
+    assert (
+        registered_plot.plot_name == "Predio Actualizado"
+    ), "❌ El nombre del predio no se actualizó."
+    assert (
+        registered_plot.plot_extension == 2500.00
+    ), "❌ La extensión del predio no se actualizó."
 
-    print("✅ Test completado con éxito. El administrador pudo actualizar un predio correctamente.")
-
-
+    print(
+        "✅ Test completado con éxito. El administrador pudo actualizar un predio correctamente."
+    )
 
 
 @pytest.mark.django_db
 def test_unauthenticated_user_cannot_update_plot(api_client, registered_plot):
     """🚫 Verifica que un usuario no autenticado NO pueda actualizar un predio."""
 
-    update_plot_url = reverse("actualizar-predio", kwargs={"id_plot": registered_plot.id_plot})
+    update_plot_url = reverse(
+        "actualizar-predio", kwargs={"id_plot": registered_plot.id_plot}
+    )
     update_data = {"plot_name": "Intento de Cambio"}
-    
+
     response = api_client.patch(update_plot_url, update_data, format="json")
 
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED, (
-        f"❌ Un usuario no autenticado pudo modificar el predio: {response.data}"
+    assert (
+        response.status_code == status.HTTP_401_UNAUTHORIZED
+    ), f"❌ Un usuario no autenticado pudo modificar el predio: {response.data}"
+
+    print(
+        "✅ Test completado con éxito. Un usuario no autenticado no puede actualizar predios."
     )
-
-    print("✅ Test completado con éxito. Un usuario no autenticado no puede actualizar predios.")
-
-
 
 
 @pytest.mark.django_db
@@ -136,7 +151,9 @@ def test_normal_user_cannot_update_plot(api_client, normal_user, registered_plot
     login_data = {"document": normal_user.document, "password": "SecurePass123"}
     login_response = api_client.post(login_url, login_data)
 
-    assert login_response.status_code == status.HTTP_200_OK, f"Error en login: {login_response.data}"
+    assert (
+        login_response.status_code == status.HTTP_200_OK
+    ), f"Error en login: {login_response.data}"
 
     # 🔹 Paso 2: Obtener y validar OTP
     otp_instance = Otp.objects.filter(user=normal_user, is_login=True).first()
@@ -144,23 +161,27 @@ def test_normal_user_cannot_update_plot(api_client, normal_user, registered_plot
     otp_data = {"document": normal_user.document, "otp": otp_instance.otp}
     otp_response = api_client.post(otp_validation_url, otp_data)
 
-    assert otp_response.status_code == status.HTTP_200_OK, f"Error al validar OTP: {otp_response.data}"
+    assert (
+        otp_response.status_code == status.HTTP_200_OK
+    ), f"Error al validar OTP: {otp_response.data}"
     assert "token" in otp_response.data, "❌ No se recibió un token tras validar el OTP."
 
     # 🔹 Paso 3: Intentar actualizar el predio
     token = otp_response.data["token"]
     headers = {"HTTP_AUTHORIZATION": f"Token {token}"}
-    update_plot_url = reverse("actualizar-predio", kwargs={"id_plot": registered_plot.id_plot})
+    update_plot_url = reverse(
+        "actualizar-predio", kwargs={"id_plot": registered_plot.id_plot}
+    )
 
     update_data = {"plot_name": "Intento de Cambio"}
 
     response = api_client.patch(update_plot_url, update_data, format="json", **headers)
 
     # 🔹 Debe fallar con un error 403 Forbidden
-    assert response.status_code == status.HTTP_403_FORBIDDEN, (
-        f"❌ Un usuario sin permisos pudo modificar el predio: {response.data}"
+    assert (
+        response.status_code == status.HTTP_403_FORBIDDEN
+    ), f"❌ Un usuario sin permisos pudo modificar el predio: {response.data}"
+
+    print(
+        "✅ Test completado con éxito. Un usuario normal no puede actualizar predios de otros usuarios."
     )
-
-    print("✅ Test completado con éxito. Un usuario normal no puede actualizar predios de otros usuarios.")
-
-

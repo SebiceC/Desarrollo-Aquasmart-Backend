@@ -5,21 +5,32 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('iot', '0006_devicetype_remove_iotdevice_device_id_and_more'),
-        ('plots_lots', '0007_alter_plot_plot_extension'),
+        ("iot", "0006_devicetype_remove_iotdevice_device_id_and_more"),
+        ("plots_lots", "0007_alter_plot_plot_extension"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='iotdevice',
-            name='id_lot',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='iot_devices', to='plots_lots.lot'),
+            model_name="iotdevice",
+            name="id_lot",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="iot_devices",
+                to="plots_lots.lot",
+            ),
         ),
         migrations.AlterField(
-            model_name='iotdevice',
-            name='id_plot',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='iot_devices', to='plots_lots.plot'),
+            model_name="iotdevice",
+            name="id_plot",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="iot_devices",
+                to="plots_lots.plot",
+            ),
         ),
     ]

@@ -4,44 +4,48 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('iot', '0002_alter_iotdevice_options_alter_iotdevice_estado'),
+        ("iot", "0002_alter_iotdevice_options_alter_iotdevice_estado"),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name='iotdevice',
-            old_name='caracteristicas',
-            new_name='characteristics',
+            model_name="iotdevice",
+            old_name="caracteristicas",
+            new_name="characteristics",
         ),
         migrations.RenameField(
-            model_name='iotdevice',
-            old_name='tipo_dispositivo',
-            new_name='device_type',
+            model_name="iotdevice",
+            old_name="tipo_dispositivo",
+            new_name="device_type",
         ),
         migrations.RenameField(
-            model_name='iotdevice',
-            old_name='lote',
-            new_name='id_lot',
+            model_name="iotdevice",
+            old_name="lote",
+            new_name="id_lot",
         ),
         migrations.RenameField(
-            model_name='iotdevice',
-            old_name='predio',
-            new_name='id_plot',
+            model_name="iotdevice",
+            old_name="predio",
+            new_name="id_plot",
         ),
         migrations.RenameField(
-            model_name='iotdevice',
-            old_name='nombre',
-            new_name='name',
+            model_name="iotdevice",
+            old_name="nombre",
+            new_name="name",
         ),
         migrations.RemoveField(
-            model_name='iotdevice',
-            name='estado',
+            model_name="iotdevice",
+            name="estado",
         ),
         migrations.AddField(
-            model_name='iotdevice',
-            name='is_active',
-            field=models.BooleanField(db_index=True, default=True, help_text='Indica si el dispositivo esta habilitado', verbose_name='estado dispositivo'),
+            model_name="iotdevice",
+            name="is_active",
+            field=models.BooleanField(
+                db_index=True,
+                default=True,
+                help_text="Indica si el dispositivo esta habilitado",
+                verbose_name="estado dispositivo",
+            ),
         ),
     ]

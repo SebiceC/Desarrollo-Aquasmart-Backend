@@ -5,7 +5,6 @@ from rest_framework.test import APIClient
 from users.models import CustomUser, Otp, PersonType
 
 
-
 @pytest.fixture
 def api_client():
     """Cliente API para realizar las solicitudes de prueba."""
@@ -54,8 +53,6 @@ def registered_users(db, person_type):
     ]
 
 
-
-
 @pytest.mark.django_db
 def test_list_all_users(api_client, admin_user, registered_users):
     """✅ Verifica que la API liste correctamente todos los usuarios, incluyendo administradores."""
@@ -65,8 +62,12 @@ def test_list_all_users(api_client, admin_user, registered_users):
     login_data = {"document": admin_user.document, "password": "AdminPass123"}
     login_response = api_client.post(login_url, login_data)
 
-    assert login_response.status_code == status.HTTP_200_OK, f"Error en login: {login_response.data}"
-    assert "message" in login_response.data, "❌ No se recibió un mensaje de confirmación de envío de OTP."
+    assert (
+        login_response.status_code == status.HTTP_200_OK
+    ), f"Error en login: {login_response.data}"
+    assert (
+        "message" in login_response.data
+    ), "❌ No se recibió un mensaje de confirmación de envío de OTP."
 
     # 🔹 Paso 2: Verificar que el OTP ha sido generado en la base de datos
     otp_instance = Otp.objects.filter(user=admin_user, is_login=True).first()
@@ -77,7 +78,9 @@ def test_list_all_users(api_client, admin_user, registered_users):
     otp_data = {"document": admin_user.document, "otp": otp_instance.otp}
     otp_response = api_client.post(otp_validation_url, otp_data)
 
-    assert otp_response.status_code == status.HTTP_200_OK, f"Error al validar OTP: {otp_response.data}"
+    assert (
+        otp_response.status_code == status.HTTP_200_OK
+    ), f"Error al validar OTP: {otp_response.data}"
     assert "token" in otp_response.data, "❌ No se recibió un token tras validar el OTP."
 
     # 🔹 Paso 4: Usar el token para listar todos los usuarios
@@ -87,7 +90,9 @@ def test_list_all_users(api_client, admin_user, registered_users):
     list_users_url = reverse("customuser-list")
     response = api_client.get(list_users_url, **headers)
 
-    assert response.status_code == status.HTTP_200_OK, f"Error en la lista de usuarios: {response.data}"
+    assert (
+        response.status_code == status.HTTP_200_OK
+    ), f"Error en la lista de usuarios: {response.data}"
 
     # 🔹 Obtener la cantidad total de usuarios en la base de datos
     total_users_db = CustomUser.objects.count()
@@ -101,8 +106,15 @@ def test_list_all_users(api_client, admin_user, registered_users):
 
     # 🔹 Verificar que cada usuario tiene los atributos requeridos
     required_fields = [
-        "document", "first_name", "last_name", "email", "phone",
-        "address", "person_type", "is_active", "is_registered"
+        "document",
+        "first_name",
+        "last_name",
+        "email",
+        "phone",
+        "address",
+        "person_type",
+        "is_active",
+        "is_registered",
     ]
     for user_data in response.data:
         for field in required_fields:
@@ -126,8 +138,10 @@ def test_admin_login(api_client, admin_user):
     assert (
         login_response.status_code == status.HTTP_200_OK
     ), f"Error en login: {login_response.data}"
-    
-    assert "message" in login_response.data, "❌ No se recibió mensaje de confirmación de envío de OTP."
+
+    assert (
+        "message" in login_response.data
+    ), "❌ No se recibió mensaje de confirmación de envío de OTP."
 
     # 🔹 Paso 2: Obtener el OTP generado en la base de datos
     otp_instance = Otp.objects.filter(user=admin_user, is_login=True).first()
@@ -143,8 +157,10 @@ def test_admin_login(api_client, admin_user):
     assert (
         otp_response.status_code == status.HTTP_200_OK
     ), f"Error al validar OTP: {otp_response.data}"
-    
+
     assert "token" in otp_response.data, "❌ No se recibió un token tras validar el OTP."
 
     # ✅ Si se llegó hasta aquí, el flujo de autenticación funciona correctamente.
-    print("✅ Test completado con éxito. El administrador recibió un token tras validar OTP.")
+    print(
+        "✅ Test completado con éxito. El administrador recibió un token tras validar OTP."
+    )

@@ -13,7 +13,7 @@ from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiPara
 from rest_framework.response import Response
 from django.contrib.auth.models import Permission
 from .validate import validate_user_exist
-from API.google.google_drive import upload_to_drive,share_folder
+from API.google.google_drive import upload_to_drive, share_folder
 import os
 from django.conf import settings
 from .permissions import PuedeCambiarIsActive, CanRegister, CanAddDocumentType
@@ -23,7 +23,9 @@ from rest_framework import serializers
 
 from django.contrib.auth.models import Permission
 from django.shortcuts import get_object_or_404
-from API.sendmsn import send_rejection_email,send_approval_email
+from API.sendmsn import send_rejection_email, send_approval_email
+
+
 @extend_schema_view(
     post=extend_schema(
         summary="Crear un nuevo usuario",
@@ -53,9 +55,9 @@ class CustomUserCreateView(generics.CreateAPIView):
         Crea un usuario y maneja la subida de archivos a Google Drive.
         """
         user = serializer.save()  # Guarda el usuario primero
-        uploaded_files = self.request.FILES.getlist('attachments')
-        # Obtiene los archivos subidos        
-        
+        uploaded_files = self.request.FILES.getlist("attachments")
+        # Obtiene los archivos subidos
+
         if uploaded_files and user.drive_folder_id:
             for uploaded_file in uploaded_files:
                 temp_file_path = os.path.join(settings.MEDIA_ROOT, uploaded_file.name)
@@ -66,9 +68,13 @@ class CustomUserCreateView(generics.CreateAPIView):
                         temp_file.write(chunk)
 
                 # Subir archivo a Google Drive
-                upload_to_drive(temp_file_path, uploaded_file.name, folder_id=user.drive_folder_id)
+                upload_to_drive(
+                    temp_file_path, uploaded_file.name, folder_id=user.drive_folder_id
+                )
                 try:
-                    share_folder(folder_id=user.drive_folder_id,email=user.email,role='reader')
+                    share_folder(
+                        folder_id=user.drive_folder_id, email=user.email, role="reader"
+                    )
                 except Exception as e:
                     print(f"Ocurrió un error al compartir la carpeta: {e}")
                     raise Exception(f"Error al compartir la carpeta: {e}")
@@ -81,14 +87,18 @@ class CustomUserCreateView(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         """Sobrescribe create para validar campos y manejar la respuesta personalizada."""
         # Validar campos inexistentes
-        received_fields = set(request.data.keys()) - {'attachments'}  # Excluir attachments
+        received_fields = set(request.data.keys()) - {
+            "attachments"
+        }  # Excluir attachments
         serializer_fields = set(self.get_serializer().fields.keys())
         invalid_fields = received_fields - serializer_fields
-        
+
         if invalid_fields:
             return Response(
-                {"error": f"Los siguientes campos no existen: {', '.join(invalid_fields)}"},
-                status=status.HTTP_400_BAD_REQUEST
+                {
+                    "error": f"Los siguientes campos no existen: {', '.join(invalid_fields)}"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         response = super().create(request, *args, **kwargs)
@@ -386,15 +396,17 @@ class AdminUserUpdateAPIView(generics.RetrieveUpdateAPIView):
         """Manejo especial para validación de campos y actualización"""
         instance = self.get_object()
         data = self.request.data
-        
+
         # Validar campos inexistentes
         serializer_fields = set(serializer.fields.keys())
         received_fields = set(data.keys())
         invalid_fields = received_fields - serializer_fields
-        
+
         if invalid_fields:
             raise serializers.ValidationError(
-                {"error": f"Los siguientes campos no existen: {', '.join(invalid_fields)}"}
+                {
+                    "error": f"Los siguientes campos no existen: {', '.join(invalid_fields)}"
+                }
             )
 
         # Verificar si hay cambios reales
@@ -403,22 +415,22 @@ class AdminUserUpdateAPIView(generics.RetrieveUpdateAPIView):
             for field, value in data.items()
             if field in serializer_fields
         )
-        
+
         if not has_changes:
             raise serializers.ValidationError(
                 {"error": "No se detectaron cambios en los datos del usuario"}
             )
 
         # Manejar la contraseña si está presente
-        password = serializer.validated_data.pop('password', None)
+        password = serializer.validated_data.pop("password", None)
         instance = serializer.save()
 
         if password:
             instance.set_password(password)
-            instance.save(update_fields=['password'])
-        
+            instance.save(update_fields=["password"])
+
         return instance
-    
+
     def patch(self, request, *args, **kwargs):
         """Maneja actualizaciones parciales con formato de respuesta consistente"""
 
@@ -446,19 +458,26 @@ class AdminUserUpdateAPIView(generics.RetrieveUpdateAPIView):
             )
 
         return response
+
+
 class UserDetailsView(generics.RetrieveAPIView):
     """
     Vista para obtener el perfil de usuario según el documento proporcionado en la URL.
     """
+
     serializer_class = UserProfileSerializer
-    permission_classes = [IsAuthenticated,IsAdminUser]  # Requiere autenticación para acceder
+    permission_classes = [
+        IsAuthenticated,
+        IsAdminUser,
+    ]  # Requiere autenticación para acceder
 
     def get_object(self):
         """
         Obtiene el usuario a partir del documento proporcionado en la URL.
         """
-        document = self.kwargs.get('document')
-        return get_object_or_404(CustomUser, document=document)    
+        document = self.kwargs.get("document")
+        return get_object_or_404(CustomUser, document=document)
+
 
 class UserProfilelView(generics.RetrieveAPIView):
     serializer_class = UserProfileSerializer
@@ -611,12 +630,15 @@ class ListUserPermissions(APIView):
             },
             status=status.HTTP_200_OK,
         )
-    
+
+
 class RejectAndDeleteUserView(APIView):
     """
     Vista para rechazar y eliminar un usuario después de enviar un correo de rechazo.
     """
-    permission_classes = [IsAuthenticated,IsAdminUser]
+
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def post(self, request, user_id, format=None):
         try:
             # Obtener el usuario
@@ -625,11 +647,11 @@ class RejectAndDeleteUserView(APIView):
             name = user.get_full_name()
 
             # Obtener el mensaje de rechazo del cuerpo de la solicitud
-            mensaje_rechazo = request.data.get('mensaje_rechazo', '')
+            mensaje_rechazo = request.data.get("mensaje_rechazo", "")
             if not mensaje_rechazo:
                 return Response(
-                    {'error': 'El mensaje de rechazo es requerido.'},
-                    status=status.HTTP_400_BAD_REQUEST
+                    {"error": "El mensaje de rechazo es requerido."},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
             # Llamar a la función importada para enviar el correo
@@ -641,20 +663,19 @@ class RejectAndDeleteUserView(APIView):
             # Retornar una respuesta exitosa
             return Response(
                 {
-                    'status': 'success',
-                    'message': 'Usuario rechazado y eliminado correctamente.',
-                    'email_result': resultado_correo
+                    "status": "success",
+                    "message": "Usuario rechazado y eliminado correctamente.",
+                    "email_result": resultado_correo,
                 },
-                status=status.HTTP_200_OK
+                status=status.HTTP_200_OK,
             )
 
         except CustomUser.DoesNotExist:
             return Response(
-                {'error': 'El usuario no existe.'},
-                status=status.HTTP_404_NOT_FOUND
+                {"error": "El usuario no existe."}, status=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
             return Response(
-                {'error': f'Error al procesar la solicitud: {str(e)}'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                {"error": f"Error al procesar la solicitud: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

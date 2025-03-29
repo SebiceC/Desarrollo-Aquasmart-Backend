@@ -4,11 +4,9 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('plots_lots', '0004_alter_plot_is_activate'),
-        ('plots_lots', '0006_remove_lot_id_lot_registration_date_alter_lot_id_lot'),
+        ("plots_lots", "0004_alter_plot_is_activate"),
+        ("plots_lots", "0006_remove_lot_id_lot_registration_date_alter_lot_id_lot"),
     ]
 
-    operations = [
-    ]
+    operations = []

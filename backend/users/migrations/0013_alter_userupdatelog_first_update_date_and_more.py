@@ -4,20 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('users', '0012_delete_loginhistory'),
+        ("users", "0012_delete_loginhistory"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='userupdatelog',
-            name='first_update_date',
+            model_name="userupdatelog",
+            name="first_update_date",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='userupdatelog',
-            name='last_update_date',
+            model_name="userupdatelog",
+            name="last_update_date",
             field=models.DateTimeField(auto_now=True),
         ),
     ]

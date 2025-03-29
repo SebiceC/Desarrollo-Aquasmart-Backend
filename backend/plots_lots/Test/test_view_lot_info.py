@@ -17,6 +17,7 @@ def person_type(db):
     """Crea un tipo de persona válido en la base de datos."""
     return PersonType.objects.create(typeName="Natural")
 
+
 @pytest.fixture
 def admin_user(db, person_type):
     """Crea un usuario administrador válido."""
@@ -29,12 +30,12 @@ def admin_user(db, person_type):
         person_type=person_type,
         is_active=True,
         is_registered=True,
-        password="AdminPass123@"  # 🔥 NO ENCRIPTAR AQUÍ
+        password="AdminPass123@",  # 🔥 NO ENCRIPTAR AQUÍ
     )
     user.set_password("AdminPass123@")  # 🔥 Aplicar `set_password` antes de guardar
     user.save()
 
-    print(f"🔹 Admin creado: {user.document}, contraseña en hash: {user.password}")  
+    print(f"🔹 Admin creado: {user.document}, contraseña en hash: {user.password}")
     return user
 
 
@@ -50,7 +51,7 @@ def normal_user(db, person_type):
         person_type=person_type,
         is_active=True,
         is_registered=True,
-        password="SecurePass123@"  # 🔥 NO ENCRIPTAR AQUÍ
+        password="SecurePass123@",  # 🔥 NO ENCRIPTAR AQUÍ
     )
     user.set_password("SecurePass123@")  # 🔥 Aplicar `set_password` antes de guardar
     user.save()
@@ -59,12 +60,10 @@ def normal_user(db, person_type):
     return user
 
 
-
 @pytest.fixture
 def soil_type(db):
     """Crea un tipo de suelo válido en la base de datos."""
     return SoilType.objects.create(name="Arcilloso")  # 🔥 Asegura que exista en la DB
-
 
 
 @pytest.fixture
@@ -131,7 +130,6 @@ def user_lots(db, user_plots, soil_type):
     return lots
 
 
-
 @pytest.mark.django_db
 def test_admin_can_view_all_lots(api_client, admin_user, admin_lots, user_lots):
     """✅ Verifica que un administrador pueda ver todos los lotes registrados en el sistema."""
@@ -141,7 +139,9 @@ def test_admin_can_view_all_lots(api_client, admin_user, admin_lots, user_lots):
     login_data = {"document": admin_user.document, "password": "AdminPass123@"}
     login_response = api_client.post(login_url, login_data)
 
-    assert login_response.status_code == status.HTTP_200_OK, f"Error en login: {login_response.data}"
+    assert (
+        login_response.status_code == status.HTTP_200_OK
+    ), f"Error en login: {login_response.data}"
 
     # 🔹 Validar OTP
     otp_instance = Otp.objects.filter(user=admin_user, is_login=True).first()
@@ -149,7 +149,9 @@ def test_admin_can_view_all_lots(api_client, admin_user, admin_lots, user_lots):
     otp_data = {"document": admin_user.document, "otp": otp_instance.otp}
     otp_response = api_client.post(otp_validation_url, otp_data)
 
-    assert otp_response.status_code == status.HTTP_200_OK, f"Error al validar OTP: {otp_response.data}"
+    assert (
+        otp_response.status_code == status.HTTP_200_OK
+    ), f"Error al validar OTP: {otp_response.data}"
     assert "token" in otp_response.data, "❌ No se recibió un token tras validar el OTP."
 
     # 🔹 Consultar la lista de lotes
@@ -159,30 +161,35 @@ def test_admin_can_view_all_lots(api_client, admin_user, admin_lots, user_lots):
     list_lots_url = reverse("lot-list")
     response = api_client.get(list_lots_url, **headers)
 
-    assert response.status_code == status.HTTP_200_OK, f"Error al obtener la lista de lotes: {response.data}"
+    assert (
+        response.status_code == status.HTTP_200_OK
+    ), f"Error al obtener la lista de lotes: {response.data}"
 
     # 🔹 Verificar que se devuelvan todos los lotes
     total_lots_db = Lot.objects.count()
     total_lots_api = len(response.data)
 
-    assert total_lots_api == total_lots_db, (
-        f"❌ Se esperaban {total_lots_db} lotes, pero la API devolvió {total_lots_api}."
-    )
+    assert (
+        total_lots_api == total_lots_db
+    ), f"❌ Se esperaban {total_lots_db} lotes, pero la API devolvió {total_lots_api}."
 
     print("✅ Test completado: El administrador puede ver todos los lotes.")
 
 
-
 @pytest.mark.django_db
-def test_normal_user_can_only_view_own_lots(api_client, normal_user, user_lots, admin_lots):
+def test_normal_user_can_only_view_own_lots(
+    api_client, normal_user, user_lots, admin_lots
+):
     """✅ Verifica que un usuario normal solo pueda ver sus propios lotes."""
 
     # 🔹 Iniciar sesión como usuario normal
     login_url = reverse("login")
     login_data = {"document": normal_user.document, "password": "SecurePass123@"}
     login_response = api_client.post(login_url, login_data)
-    
-    assert login_response.status_code == status.HTTP_200_OK, f"Error en login: {login_response.data}"
+
+    assert (
+        login_response.status_code == status.HTTP_200_OK
+    ), f"Error en login: {login_response.data}"
 
     # 🔹 Validar OTP
     otp_instance = Otp.objects.filter(user=normal_user, is_login=True).first()
@@ -190,7 +197,9 @@ def test_normal_user_can_only_view_own_lots(api_client, normal_user, user_lots, 
     otp_data = {"document": normal_user.document, "otp": otp_instance.otp}
     otp_response = api_client.post(otp_validation_url, otp_data)
 
-    assert otp_response.status_code == status.HTTP_200_OK, f"Error al validar OTP: {otp_response.data}"
+    assert (
+        otp_response.status_code == status.HTTP_200_OK
+    ), f"Error al validar OTP: {otp_response.data}"
     assert "token" in otp_response.data, "❌ No se recibió un token tras validar el OTP."
 
     # 🔹 Consultar la lista de lotes
@@ -200,21 +209,25 @@ def test_normal_user_can_only_view_own_lots(api_client, normal_user, user_lots, 
     list_lots_url = reverse("lot-list")
     response = api_client.get(list_lots_url, **headers)
 
-    assert response.status_code == status.HTTP_200_OK, f"Error al obtener la lista de lotes: {response.data}"
+    assert (
+        response.status_code == status.HTTP_200_OK
+    ), f"Error al obtener la lista de lotes: {response.data}"
 
     # 🔹 Verificar que solo aparecen los lotes del usuario
     user_lots_db = Lot.objects.filter(plot__owner=normal_user)
-    api_lots = [lot for lot in response.data if lot["id_lot"] in list(user_lots_db.values_list("id_lot", flat=True))]
+    api_lots = [
+        lot
+        for lot in response.data
+        if lot["id_lot"] in list(user_lots_db.values_list("id_lot", flat=True))
+    ]
 
     print("🔹 Respuesta completa de la API:", response.data)
 
-    assert len(api_lots) == user_lots_db.count(), (
-        f"❌ El usuario debería ver {user_lots_db.count()} lotes, pero la API devolvió {len(api_lots)}."
-    )
+    assert (
+        len(api_lots) == user_lots_db.count()
+    ), f"❌ El usuario debería ver {user_lots_db.count()} lotes, pero la API devolvió {len(api_lots)}."
 
     print("✅ Test completado: El usuario normal solo puede ver sus propios lotes.")
-
-
 
 
 @pytest.mark.django_db
@@ -226,7 +239,9 @@ def test_normal_user_cannot_view_other_users_lots(api_client, normal_user, admin
     login_data = {"document": normal_user.document, "password": "SecurePass123@"}
     login_response = api_client.post(login_url, login_data)
 
-    assert login_response.status_code == status.HTTP_200_OK, f"Error en login: {login_response.data}"
+    assert (
+        login_response.status_code == status.HTTP_200_OK
+    ), f"Error en login: {login_response.data}"
 
     # 🔹 Validar OTP
     otp_instance = Otp.objects.filter(user=normal_user, is_login=True).first()
@@ -234,7 +249,9 @@ def test_normal_user_cannot_view_other_users_lots(api_client, normal_user, admin
     otp_data = {"document": normal_user.document, "otp": otp_instance.otp}
     otp_response = api_client.post(otp_validation_url, otp_data)
 
-    assert otp_response.status_code == status.HTTP_200_OK, f"Error al validar OTP: {otp_response.data}"
+    assert (
+        otp_response.status_code == status.HTTP_200_OK
+    ), f"Error al validar OTP: {otp_response.data}"
     assert "token" in otp_response.data, "❌ No se recibió un token tras validar el OTP."
 
     # 🔹 Intentar acceder a un lote del administrador
@@ -245,13 +262,12 @@ def test_normal_user_cannot_view_other_users_lots(api_client, normal_user, admin
     lot_detail_url = reverse("detalle-lote", kwargs={"id_lot": admin_lot.id_lot})
     response = api_client.get(lot_detail_url, **headers)
 
-    assert response.status_code in [status.HTTP_403_FORBIDDEN, status.HTTP_404_NOT_FOUND], (
-        f"❌ El usuario normal pudo acceder a un lote del admin. Respuesta: {response.data}"
-    )
+    assert response.status_code in [
+        status.HTTP_403_FORBIDDEN,
+        status.HTTP_404_NOT_FOUND,
+    ], f"❌ El usuario normal pudo acceder a un lote del admin. Respuesta: {response.data}"
 
     print("✅ Test completado: El usuario normal NO puede ver lotes de otros usuarios.")
-
-
 
 
 @pytest.mark.django_db
@@ -261,6 +277,10 @@ def test_unauthenticated_user_cannot_view_lot_info(api_client, user_lots):
     lot_detail_url = reverse("detalle-lote", kwargs={"id_lot": user_lots[0].id_lot})
     response = api_client.get(lot_detail_url)
 
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED, "❌ Un usuario no autenticado pudo acceder al lote."
+    assert (
+        response.status_code == status.HTTP_401_UNAUTHORIZED
+    ), "❌ Un usuario no autenticado pudo acceder al lote."
 
-    print("✅ Test completado: Un usuario no autenticado NO puede ver información de lotes.")
+    print(
+        "✅ Test completado: Un usuario no autenticado NO puede ver información de lotes."
+    )

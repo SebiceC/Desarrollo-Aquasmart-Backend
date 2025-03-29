@@ -4,19 +4,26 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('iot', '0001_initial'),
+        ("iot", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='iotdevice',
-            options={'verbose_name': 'Dispositivo iot', 'verbose_name_plural': 'Dispositivos iot'},
+            name="iotdevice",
+            options={
+                "verbose_name": "Dispositivo iot",
+                "verbose_name_plural": "Dispositivos iot",
+            },
         ),
         migrations.AlterField(
-            model_name='iotdevice',
-            name='estado',
-            field=models.BooleanField(db_index=True, default=True, help_text='Indica si el predio esta habilitado', verbose_name='estado predio'),
+            model_name="iotdevice",
+            name="estado",
+            field=models.BooleanField(
+                db_index=True,
+                default=True,
+                help_text="Indica si el predio esta habilitado",
+                verbose_name="estado predio",
+            ),
         ),
     ]

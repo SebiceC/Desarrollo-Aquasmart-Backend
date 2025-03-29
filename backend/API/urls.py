@@ -23,7 +23,7 @@ from drf_spectacular.views import (
 )
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path("admin/", admin.site.urls),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
         "api/swagger/",
@@ -32,7 +32,8 @@ urlpatterns = [
     ),
     path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
     path("api/users/", include("users.urls"), name="app-users"),
-    path("api/plot-lot/",include("plots_lots.urls"), name="app-plots-lots"),
-    path("api/iot/",include("iot.urls"), name="app-iot"),
-    path("api/admin/",include("API.groups_permissions.urls")),
+    path("api/plot-lot/", include("plots_lots.urls"), name="app-plots-lots"),
+    path("api/iot/", include("iot.urls"), name="app-iot"),
+    path("api/admin/", include("API.groups_permissions.urls"), name="Permisos_roles"),
+    path("api/caudal/", include("caudal.urls"), name="app-caudal"),
 ]

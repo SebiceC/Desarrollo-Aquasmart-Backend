@@ -5,41 +5,60 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('iot', '0005_alter_iotdevice_options_iotdevice_device_id_and_more'),
+        ("iot", "0005_alter_iotdevice_options_iotdevice_device_id_and_more"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='DeviceType',
+            name="DeviceType",
             fields=[
-                ('device_id', models.CharField(editable=False, max_length=2, primary_key=True, serialize=False)),
-                ('name', models.CharField(max_length=50)),
+                (
+                    "device_id",
+                    models.CharField(
+                        editable=False, max_length=2, primary_key=True, serialize=False
+                    ),
+                ),
+                ("name", models.CharField(max_length=50)),
             ],
         ),
         migrations.RemoveField(
-            model_name='iotdevice',
-            name='device_id',
+            model_name="iotdevice",
+            name="device_id",
         ),
         migrations.RemoveField(
-            model_name='iotdevice',
-            name='id',
+            model_name="iotdevice",
+            name="id",
         ),
         migrations.AddField(
-            model_name='iotdevice',
-            name='iot_id',
-            field=models.CharField(default=1, editable=False, max_length=7, primary_key=True, serialize=False),
+            model_name="iotdevice",
+            name="iot_id",
+            field=models.CharField(
+                default=1,
+                editable=False,
+                max_length=7,
+                primary_key=True,
+                serialize=False,
+            ),
             preserve_default=False,
         ),
         migrations.AlterField(
-            model_name='iotdevice',
-            name='is_active',
-            field=models.BooleanField(db_index=True, default=True, help_text='Indica si el dispositivo está habilitado', verbose_name='Estado del Dispositivo'),
+            model_name="iotdevice",
+            name="is_active",
+            field=models.BooleanField(
+                db_index=True,
+                default=True,
+                help_text="Indica si el dispositivo está habilitado",
+                verbose_name="Estado del Dispositivo",
+            ),
         ),
         migrations.AlterField(
-            model_name='iotdevice',
-            name='device_type',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='iot.devicetype', verbose_name='Tipo de Dispositivo'),
+            model_name="iotdevice",
+            name="device_type",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to="iot.devicetype",
+                verbose_name="Tipo de Dispositivo",
+            ),
         ),
     ]

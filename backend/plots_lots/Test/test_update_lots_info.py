@@ -6,7 +6,6 @@ from users.models import CustomUser, Otp, PersonType
 from rest_framework.test import APIClient
 
 
-
 @pytest.fixture
 def api_client():
     """Cliente API para realizar solicitudes de prueba."""
@@ -17,6 +16,7 @@ def api_client():
 def person_type(db):
     """Crea un tipo de persona válido en la base de datos."""
     return PersonType.objects.create(typeName="Natural")
+
 
 @pytest.fixture
 def admin_user(db, person_type):
@@ -30,12 +30,12 @@ def admin_user(db, person_type):
         person_type=person_type,
         is_active=True,
         is_registered=True,
-        password="AdminPass123@"  # 🔥 NO ENCRIPTAR AQUÍ
+        password="AdminPass123@",  # 🔥 NO ENCRIPTAR AQUÍ
     )
     user.set_password("AdminPass123@")  # 🔥 Aplicar `set_password` antes de guardar
     user.save()
 
-    print(f"🔹 Admin creado: {user.document}, contraseña en hash: {user.password}")  
+    print(f"🔹 Admin creado: {user.document}, contraseña en hash: {user.password}")
     return user
 
 
@@ -51,7 +51,7 @@ def normal_user(db, person_type):
         person_type=person_type,
         is_active=True,
         is_registered=True,
-        password="SecurePass123@"  # 🔥 NO ENCRIPTAR AQUÍ
+        password="SecurePass123@",  # 🔥 NO ENCRIPTAR AQUÍ
     )
     user.set_password("SecurePass123@")  # 🔥 Aplicar `set_password` antes de guardar
     user.save()
@@ -60,12 +60,10 @@ def normal_user(db, person_type):
     return user
 
 
-
 @pytest.fixture
 def soil_type(db):
     """Crea un tipo de suelo válido en la base de datos."""
     return SoilType.objects.create(name="Arcilloso")  # 🔥 Asegura que exista en la DB
-
 
 
 @pytest.fixture
@@ -132,7 +130,6 @@ def user_lots(db, user_plots, soil_type):
     return lots
 
 
-
 @pytest.mark.django_db
 def test_admin_can_update_lot(api_client, admin_user, admin_lots):
     """✅ Verifica que un administrador pueda actualizar un lote correctamente."""
@@ -141,14 +138,18 @@ def test_admin_can_update_lot(api_client, admin_user, admin_lots):
     login_url = reverse("login")
     login_data = {"document": admin_user.document, "password": "AdminPass123@"}
     login_response = api_client.post(login_url, login_data)
-    assert login_response.status_code == status.HTTP_200_OK, f"Error en login: {login_response.data}"
+    assert (
+        login_response.status_code == status.HTTP_200_OK
+    ), f"Error en login: {login_response.data}"
 
     # 🔹 Paso 2: Validar OTP
     otp_instance = Otp.objects.filter(user=admin_user, is_login=True).first()
     otp_validation_url = reverse("validate-otp")
     otp_data = {"document": admin_user.document, "otp": otp_instance.otp}
     otp_response = api_client.post(otp_validation_url, otp_data)
-    assert otp_response.status_code == status.HTTP_200_OK, f"Error al validar OTP: {otp_response.data}"
+    assert (
+        otp_response.status_code == status.HTTP_200_OK
+    ), f"Error al validar OTP: {otp_response.data}"
     assert "token" in otp_response.data, "❌ No se recibió un token tras validar el OTP."
 
     # 🔹 Paso 3: Seleccionar un lote del administrador
@@ -161,11 +162,15 @@ def test_admin_can_update_lot(api_client, admin_user, admin_lots):
 
     update_data = {
         "crop_type": "Cebada",  # Cambio de cultivo
-        "is_activate": False  # Desactivar el lote
+        "is_activate": False,  # Desactivar el lote
     }
 
-    update_response = api_client.patch(update_lot_url, update_data, format="json", **headers)
-    assert update_response.status_code == status.HTTP_200_OK, f"Error al actualizar el lote: {update_response.data}"
+    update_response = api_client.patch(
+        update_lot_url, update_data, format="json", **headers
+    )
+    assert (
+        update_response.status_code == status.HTTP_200_OK
+    ), f"Error al actualizar el lote: {update_response.data}"
 
     # 🔹 Paso 5: Verificar que los cambios se reflejan en la base de datos
     lot_to_update.refresh_from_db()
@@ -183,14 +188,18 @@ def test_normal_user_cannot_update_other_users_lot(api_client, normal_user, admi
     login_url = reverse("login")
     login_data = {"document": normal_user.document, "password": "SecurePass123@"}
     login_response = api_client.post(login_url, login_data)
-    assert login_response.status_code == status.HTTP_200_OK, f"Error en login: {login_response.data}"
+    assert (
+        login_response.status_code == status.HTTP_200_OK
+    ), f"Error en login: {login_response.data}"
 
     # 🔹 Paso 2: Validar OTP
     otp_instance = Otp.objects.filter(user=normal_user, is_login=True).first()
     otp_validation_url = reverse("validate-otp")
     otp_data = {"document": normal_user.document, "otp": otp_instance.otp}
     otp_response = api_client.post(otp_validation_url, otp_data)
-    assert otp_response.status_code == status.HTTP_200_OK, f"Error al validar OTP: {otp_response.data}"
+    assert (
+        otp_response.status_code == status.HTTP_200_OK
+    ), f"Error al validar OTP: {otp_response.data}"
     assert "token" in otp_response.data, "❌ No se recibió un token tras validar el OTP."
 
     # 🔹 Paso 3: Intentar actualizar un lote del administrador
@@ -202,14 +211,18 @@ def test_normal_user_cannot_update_other_users_lot(api_client, normal_user, admi
 
     update_data = {"crop_type": "Cebada"}
 
-    update_response = api_client.patch(update_lot_url, update_data, format="json", **headers)
-    
-    # 🔹 Debe devolver un error 403 Forbidden
-    assert update_response.status_code == status.HTTP_403_FORBIDDEN, (
-        f"❌ Un usuario normal pudo modificar el lote de otro usuario: {update_response.data}"
+    update_response = api_client.patch(
+        update_lot_url, update_data, format="json", **headers
     )
 
-    print("✅ Test completado: Un usuario normal NO puede actualizar lotes de otros usuarios.")
+    # 🔹 Debe devolver un error 403 Forbidden
+    assert (
+        update_response.status_code == status.HTTP_403_FORBIDDEN
+    ), f"❌ Un usuario normal pudo modificar el lote de otro usuario: {update_response.data}"
+
+    print(
+        "✅ Test completado: Un usuario normal NO puede actualizar lotes de otros usuarios."
+    )
 
 
 @pytest.mark.django_db
@@ -223,8 +236,8 @@ def test_unauthenticated_user_cannot_update_lot(api_client, admin_lots):
     update_response = api_client.patch(update_lot_url, update_data, format="json")
 
     # 🔹 Debe devolver un error 401 Unauthorized
-    assert update_response.status_code == status.HTTP_401_UNAUTHORIZED, (
-        f"❌ Un usuario no autenticado pudo modificar el lote: {update_response.data}"
-    )
+    assert (
+        update_response.status_code == status.HTTP_401_UNAUTHORIZED
+    ), f"❌ Un usuario no autenticado pudo modificar el lote: {update_response.data}"
 
     print("✅ Test completado: Un usuario no autenticado NO puede actualizar lotes.")

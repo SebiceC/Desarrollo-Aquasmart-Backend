@@ -55,7 +55,6 @@ def normal_user(db, person_type):
     return user
 
 
-
 @pytest.fixture
 def registered_plot(db, admin_user):
     """Crea un predio registrado en la base de datos."""
@@ -65,7 +64,7 @@ def registered_plot(db, admin_user):
         is_activate=True,
         latitud=-74.00597,
         longitud=40.712776,
-        plot_extension=2000.75
+        plot_extension=2000.75,
     )
 
 
@@ -73,7 +72,6 @@ def registered_plot(db, admin_user):
 def soil_type(db):
     """Crea un tipo de suelo válido en la base de datos."""
     return SoilType.objects.create(name="Arcilloso")  # 🔥 Asegura que exista en la DB
-
 
 
 @pytest.mark.django_db
@@ -85,7 +83,9 @@ def test_admin_can_register_lot(api_client, admin_user, soil_type, registered_pl
     login_data = {"document": admin_user.document, "password": "AdminPass123"}
     login_response = api_client.post(login_url, login_data)
 
-    assert login_response.status_code == status.HTTP_200_OK, f"Error en login: {login_response.data}"
+    assert (
+        login_response.status_code == status.HTTP_200_OK
+    ), f"Error en login: {login_response.data}"
 
     # 🔹 Paso 2: Obtener y validar OTP
     otp_instance = Otp.objects.filter(user=admin_user, is_login=True).first()
@@ -93,9 +93,10 @@ def test_admin_can_register_lot(api_client, admin_user, soil_type, registered_pl
     otp_data = {"document": admin_user.document, "otp": otp_instance.otp}
     otp_response = api_client.post(otp_validation_url, otp_data)
 
-    assert otp_response.status_code == status.HTTP_200_OK, f"Error al validar OTP: {otp_response.data}"
+    assert (
+        otp_response.status_code == status.HTTP_200_OK
+    ), f"Error al validar OTP: {otp_response.data}"
     assert "token" in otp_response.data, "❌ No se recibió un token tras validar el OTP."
-
 
     plot_id = registered_plot.id_plot  # ✅ Obtener ID del predio creado
     soil_type_id = soil_type.id  # ✅ Obtener ID del tipo de suelo creado
@@ -114,22 +115,28 @@ def test_admin_can_register_lot(api_client, admin_user, soil_type, registered_pl
         "plot": plot_id,
         "is_activate": True,
         "latitud": -74.00597,
-        "longitud": 40.712776
+        "longitud": 40.712776,
     }
 
     response = api_client.post(register_lot_url, lot_data, format="json", **headers)
 
     # 🔹 Verificar la respuesta de la API
-    assert response.status_code == status.HTTP_201_CREATED, f"Error en el registro del lote: {response.data}"
+    assert (
+        response.status_code == status.HTTP_201_CREATED
+    ), f"Error en el registro del lote: {response.data}"
     assert "id_lot" in response.data, "❌ No se recibió el identificador del lote."
 
     registered_lot_id = response.data["id_lot"]
     print(f"✅ Lote registrado con ID: {registered_lot_id}")
 
     # 🔹 Verificación redundante necesaria
-    assert response.data["id_lot"] == response.data["id_lot"], "❌ El ID del lote no coincide."
+    assert (
+        response.data["id_lot"] == response.data["id_lot"]
+    ), "❌ El ID del lote no coincide."
 
-    print("✅ Test completado con éxito. El administrador pudo registrar un lote correctamente.")
+    print(
+        "✅ Test completado con éxito. El administrador pudo registrar un lote correctamente."
+    )
 
 
 @pytest.mark.django_db
@@ -141,7 +148,9 @@ def test_normal_user_cannot_register_lot(api_client, normal_user):
     login_data = {"document": normal_user.document, "password": "SecurePass123"}
     login_response = api_client.post(login_url, login_data)
 
-    assert login_response.status_code == status.HTTP_200_OK, f"Error en login: {login_response.data}"
+    assert (
+        login_response.status_code == status.HTTP_200_OK
+    ), f"Error en login: {login_response.data}"
 
     # 🔹 Paso 2: Validar OTP
     otp_instance = Otp.objects.filter(user=normal_user, is_login=True).first()
@@ -149,7 +158,9 @@ def test_normal_user_cannot_register_lot(api_client, normal_user):
     otp_data = {"document": normal_user.document, "otp": otp_instance.otp}
     otp_response = api_client.post(otp_validation_url, otp_data)
 
-    assert otp_response.status_code == status.HTTP_200_OK, f"Error al validar OTP: {otp_response.data}"
+    assert (
+        otp_response.status_code == status.HTTP_200_OK
+    ), f"Error al validar OTP: {otp_response.data}"
     assert "token" in otp_response.data, "❌ No se recibió un token tras validar el OTP."
 
     # 🔹 Paso 3: Intentar registrar un lote
@@ -163,15 +174,15 @@ def test_normal_user_cannot_register_lot(api_client, normal_user):
         "owner": normal_user.document,
         "is_activate": True,
         "latitud": -75.12345,
-        "longitud": 39.98765
+        "longitud": 39.98765,
     }
 
     response = api_client.post(register_lot_url, lot_data, format="json", **headers)
 
     # 🔹 Debe fallar con error 403 Forbidden
-    assert response.status_code == status.HTTP_403_FORBIDDEN, (
-        f"❌ Se permitió a un usuario sin permisos registrar un lote: {response.data}"
-    )
+    assert (
+        response.status_code == status.HTTP_403_FORBIDDEN
+    ), f"❌ Se permitió a un usuario sin permisos registrar un lote: {response.data}"
 
     print("✅ Test completado con éxito. Un usuario normal no puede registrar lotes.")
 
@@ -188,13 +199,15 @@ def test_unauthenticated_user_cannot_register_lot(api_client):
         "owner": "123456789012",  # 🔥 No importa el dueño, el usuario no está autenticado
         "is_activate": True,
         "latitud": -74.12345,
-        "longitud": 40.54321
+        "longitud": 40.54321,
     }
 
     response = api_client.post(register_lot_url, lot_data, format="json")
 
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED, (
-        f"❌ Se permitió a un usuario no autenticado registrar un lote: {response.data}"
-    )
+    assert (
+        response.status_code == status.HTTP_401_UNAUTHORIZED
+    ), f"❌ Se permitió a un usuario no autenticado registrar un lote: {response.data}"
 
-    print("✅ Test completado con éxito. Un usuario no autenticado no puede registrar lotes.")
+    print(
+        "✅ Test completado con éxito. Un usuario no autenticado no puede registrar lotes."
+    )

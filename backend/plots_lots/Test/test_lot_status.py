@@ -119,6 +119,7 @@ def authenticated_admin_client(api_client, admin_user):
 
     return api_client
 
+
 @pytest.fixture
 def authenticated_regular_client(api_client, regular_user):
     """Cliente API autenticado como usuario regular."""

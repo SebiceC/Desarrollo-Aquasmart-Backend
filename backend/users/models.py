@@ -7,6 +7,7 @@ import string
 from auditlog.registry import auditlog
 from auditlog.models import LogEntry
 
+
 class UserManager(BaseUserManager):
     """
     Administrador de usuarios personalizado para la gestión de usuarios y superusuarios.
@@ -105,9 +106,25 @@ class CustomUser(AbstractUser):
     )
     first_name = models.CharField(max_length=50, db_index=True, verbose_name="Nombre")
     last_name = models.CharField(max_length=50, db_index=True, verbose_name="Apellido")
-    email = models.EmailField(unique=True, db_index=True, verbose_name="Correo Electrónico")
-    document_type = models.ForeignKey('DocumentType', on_delete=models.CASCADE, related_name="users_with_document_type", null=True, db_index=True, verbose_name="Tipo de Documento")
-    person_type = models.ForeignKey('PersonType', on_delete=models.CASCADE, related_name="users_with_person_type", null=True, db_index=True, verbose_name="Tipo de Persona")
+    email = models.EmailField(
+        unique=True, db_index=True, verbose_name="Correo Electrónico"
+    )
+    document_type = models.ForeignKey(
+        "DocumentType",
+        on_delete=models.CASCADE,
+        related_name="users_with_document_type",
+        null=True,
+        db_index=True,
+        verbose_name="Tipo de Documento",
+    )
+    person_type = models.ForeignKey(
+        "PersonType",
+        on_delete=models.CASCADE,
+        related_name="users_with_person_type",
+        null=True,
+        db_index=True,
+        verbose_name="Tipo de Persona",
+    )
     phone = models.CharField(max_length=10, db_index=True, verbose_name="Teléfono")
     address = models.CharField(max_length=200, db_index=True, verbose_name="Dirección")
     is_registered = models.BooleanField(
@@ -216,7 +233,8 @@ class PersonType(models.Model):
 
     def __str__(self):
         return f"{self.personTypeId} - {self.typeName}"
-    
+
+
 class LoginRestriction(models.Model):
     user = models.ForeignKey(
         CustomUser,
@@ -233,7 +251,7 @@ class LoginRestriction(models.Model):
         """Registra un intento fallido de inicio de sesión"""
         if self.is_blocked():
             return "El usuario está bloqueado hasta {}".format(self.blocked_until)
-        
+
         self.attempts += 1
         self.last_attempt_time = now()
 
@@ -271,19 +289,24 @@ class UserUpdateLog(models.Model):
     )
     update_count = models.IntegerField(default=0)
     last_update_date = models.DateTimeField(auto_now=True)
-    first_update_date = models.DateTimeField(null=True, blank=True)  # Nuevo campo para la primera actualización
+    first_update_date = models.DateTimeField(
+        null=True, blank=True
+    )  # Nuevo campo para la primera actualización
 
     def can_update(self, updating_user):
         """
         Verifica si el usuario que está realizando la actualización tiene permisos.
-        
+
         - Si el usuario que realiza la actualización es staff, no hay restricciones.
         - Si es un usuario normal, se aplican las reglas de límite semanal.
         """
-        
+
         # Si el usuario que está actualizando (updating_user) es staff, permitir sin restricciones
         if updating_user.is_staff:
-            return True, "Datos actualizados con éxito. No tienes restricciones de actualización."
+            return (
+                True,
+                "Datos actualizados con éxito. No tienes restricciones de actualización.",
+            )
 
         today = now()
 
@@ -293,7 +316,7 @@ class UserUpdateLog(models.Model):
             self.save()
 
         # Calcula el final de la semana personalizada (7 días después de la primera actualización)
-        #end_of_week = self.first_update_date + timedelta(days=6)
+        # end_of_week = self.first_update_date + timedelta(days=6)
         end_of_week = self.first_update_date + timedelta(seconds=10)
 
         # Si la fecha actual está fuera de la semana personalizada, reinicia el contador
@@ -314,7 +337,10 @@ class UserUpdateLog(models.Model):
                 "Datos actualizados con éxito. Te queda 0 cambio más esta semana.",
             )
         elif self.update_count == 1:
-            return True, "Datos actualizados con éxito. Te queda 1 cambio más esta semana."
+            return (
+                True,
+                "Datos actualizados con éxito. Te queda 1 cambio más esta semana.",
+            )
         else:
             return True, "Datos actualizados con éxito."
 
@@ -323,12 +349,15 @@ class UserUpdateLog(models.Model):
         self.update_count += 1
         self.last_update_date = now()
         self.save()
-        
+
     def __str__(self):
         return f"Update profil {self.user} - Updates: {self.update_count}"
 
+
 # Registrar modelos para auditoría
-auditlog.register(CustomUser)  # El registro de campos excluidos se maneja de otra manera
+auditlog.register(
+    CustomUser
+)  # El registro de campos excluidos se maneja de otra manera
 auditlog.register(DocumentType)
 auditlog.register(PersonType)
 auditlog.register(LoginRestriction)

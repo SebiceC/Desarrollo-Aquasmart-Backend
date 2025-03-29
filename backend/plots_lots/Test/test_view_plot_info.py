@@ -67,7 +67,7 @@ def registered_plots(db, admin_user, normal_user):
             longitud=41.98765 - i,
             plot_extension=1000.00 + i * 5,
             is_activate=True,
-            owner=admin_user
+            owner=admin_user,
         )
         for i in range(1, 4)
     ]
@@ -80,7 +80,7 @@ def registered_plots(db, admin_user, normal_user):
             longitud=42.12345 - i,
             plot_extension=500.00 + i * 3,
             is_activate=True,
-            owner=normal_user
+            owner=normal_user,
         )
         for i in range(1, 4)
     ]
@@ -97,7 +97,9 @@ def test_view_district_plot_details(api_client, admin_user, registered_plots):
     login_data = {"document": admin_user.document, "password": "AdminPass123"}
     login_response = api_client.post(login_url, login_data)
 
-    assert login_response.status_code == status.HTTP_200_OK, f"Error en login: {login_response.data}"
+    assert (
+        login_response.status_code == status.HTTP_200_OK
+    ), f"Error en login: {login_response.data}"
 
     # 🔹 Paso 2: Obtener y validar OTP
     otp_instance = Otp.objects.filter(user=admin_user, is_login=True).first()
@@ -107,7 +109,9 @@ def test_view_district_plot_details(api_client, admin_user, registered_plots):
     otp_data = {"document": admin_user.document, "otp": otp_instance.otp}
     otp_response = api_client.post(otp_validation_url, otp_data)
 
-    assert otp_response.status_code == status.HTTP_200_OK, f"Error al validar OTP: {otp_response.data}"
+    assert (
+        otp_response.status_code == status.HTTP_200_OK
+    ), f"Error al validar OTP: {otp_response.data}"
     assert "token" in otp_response.data, "❌ No se recibió un token tras validar el OTP."
 
     # 🔹 Paso 3: Autenticarse con el token generado
@@ -116,17 +120,32 @@ def test_view_district_plot_details(api_client, admin_user, registered_plots):
 
     # 🔹 Paso 4: Consultar la información de un predio específico
     plot = registered_plots[0]  # Tomamos el primer predio registrado
-    plot_detail_url = reverse("detalle-predio", kwargs={"id_plot": plot.id_plot})  # 🔥 Verifica que este sea el nombre correcto en `urls.py`
+    plot_detail_url = reverse(
+        "detalle-predio", kwargs={"id_plot": plot.id_plot}
+    )  # 🔥 Verifica que este sea el nombre correcto en `urls.py`
     response = api_client.get(plot_detail_url, **headers)
 
-    assert response.status_code == status.HTTP_200_OK, f"Error al obtener la información del predio: {response.data}"
+    assert (
+        response.status_code == status.HTTP_200_OK
+    ), f"Error al obtener la información del predio: {response.data}"
 
     # 🔹 Paso 5: Verificar que la API devuelve los datos completos del predio
-    required_fields = ["id_plot", "plot_name", "is_activate", "latitud", "longitud", "plot_extension", "registration_date", "owner"]
+    required_fields = [
+        "id_plot",
+        "plot_name",
+        "is_activate",
+        "latitud",
+        "longitud",
+        "plot_extension",
+        "registration_date",
+        "owner",
+    ]
     for field in required_fields:
         assert field in response.data, f"❌ Falta el campo '{field}' en la respuesta."
 
-    print(f"✅ Test completado con éxito. Se visualizó correctamente la información del predio {plot.id_plot}.")
+    print(
+        f"✅ Test completado con éxito. Se visualizó correctamente la información del predio {plot.id_plot}."
+    )
 
 
 @pytest.mark.django_db
@@ -138,7 +157,9 @@ def test_normal_user_cannot_view_plot_details(api_client, normal_user, admin_use
     login_data = {"document": admin_user.document, "password": "AdminPass123"}
     login_response = api_client.post(login_url, login_data)
 
-    assert login_response.status_code == status.HTTP_200_OK, f"Error en login: {login_response.data}"
+    assert (
+        login_response.status_code == status.HTTP_200_OK
+    ), f"Error en login: {login_response.data}"
 
     # 🔹 Paso 2: Obtener y validar OTP como administrador
     otp_instance = Otp.objects.filter(user=admin_user, is_login=True).first()
@@ -146,7 +167,9 @@ def test_normal_user_cannot_view_plot_details(api_client, normal_user, admin_use
     otp_data = {"document": admin_user.document, "otp": otp_instance.otp}
     otp_response = api_client.post(otp_validation_url, otp_data)
 
-    assert otp_response.status_code == status.HTTP_200_OK, f"Error al validar OTP: {otp_response.data}"
+    assert (
+        otp_response.status_code == status.HTTP_200_OK
+    ), f"Error al validar OTP: {otp_response.data}"
     assert "token" in otp_response.data, "❌ No se recibió un token tras validar el OTP."
 
     # 🔹 Paso 3: Registrar un predio con el administrador
@@ -162,37 +185,51 @@ def test_normal_user_cannot_view_plot_details(api_client, normal_user, admin_use
         "is_activate": True,
         "latitud": -75.12345,
         "longitud": 41.98765,
-        "plot_extension": 1800.00
+        "plot_extension": 1800.00,
     }
 
-    register_response = api_client.post(register_plot_url, plot_data, format="json", **headers)
+    register_response = api_client.post(
+        register_plot_url, plot_data, format="json", **headers
+    )
 
-    assert register_response.status_code == status.HTTP_201_CREATED, f"Error al registrar predio: {register_response.data}"
-    assert "id_plot" in register_response.data, "❌ No se recibió el ID del predio en la respuesta."
+    assert (
+        register_response.status_code == status.HTTP_201_CREATED
+    ), f"Error al registrar predio: {register_response.data}"
+    assert (
+        "id_plot" in register_response.data
+    ), "❌ No se recibió el ID del predio en la respuesta."
 
-    registered_plot_id = register_response.data["id_plot"]  # 🔥 ID real del predio registrado
+    registered_plot_id = register_response.data[
+        "id_plot"
+    ]  # 🔥 ID real del predio registrado
     print(f"✅ Predio registrado con ID: {registered_plot_id}")
 
     # 🔹 Paso 4: Iniciar sesión como usuario normal
     login_data_user = {"document": normal_user.document, "password": "SecurePass123"}
     login_response_user = api_client.post(login_url, login_data_user)
 
-    assert login_response_user.status_code == status.HTTP_200_OK, f"Error en login: {login_response_user.data}"
+    assert (
+        login_response_user.status_code == status.HTTP_200_OK
+    ), f"Error en login: {login_response_user.data}"
 
     # 🔹 Paso 5: Validar OTP como usuario normal
     otp_instance_user = Otp.objects.filter(user=normal_user, is_login=True).first()
     otp_data_user = {"document": normal_user.document, "otp": otp_instance_user.otp}
     otp_response_user = api_client.post(otp_validation_url, otp_data_user)
 
-    assert otp_response_user.status_code == status.HTTP_200_OK, f"Error al validar OTP: {otp_response_user.data}"
-    assert "token" in otp_response_user.data, "❌ No se recibió un token tras validar el OTP."
-    
+    assert (
+        otp_response_user.status_code == status.HTTP_200_OK
+    ), f"Error al validar OTP: {otp_response_user.data}"
+    assert (
+        "token" in otp_response_user.data
+    ), "❌ No se recibió un token tras validar el OTP."
+
     # 🔹 Paso 6: Intentar acceder a la información del predio del administrador
     user_token = otp_response_user.data["token"]
     headers_user = {"HTTP_AUTHORIZATION": f"Token {user_token}"}
 
     # 🔹 Verificar si la API usa "id_plot" o "id" en la URL
-    plot_detail_url = reverse("detalle-predio", kwargs={"id_plot": registered_plot_id})  
+    plot_detail_url = reverse("detalle-predio", kwargs={"id_plot": registered_plot_id})
 
     print(f"🔹 Intentando acceder a: {plot_detail_url}")
 
@@ -200,19 +237,19 @@ def test_normal_user_cannot_view_plot_details(api_client, normal_user, admin_use
 
     # 🔹 Si la API responde con 404, hay un problema en la configuración de la vista o la URL
     if response.status_code == status.HTTP_404_NOT_FOUND:
-        print(f"⚠️ Advertencia: El servidor respondió con 404. Esto sugiere que la API no encuentra el predio con ID {registered_plot_id}.")
-        print("⚠️ Verifica que la vista permite acceder a todos los predios y no solo a los del usuario autenticado.")
+        print(
+            f"⚠️ Advertencia: El servidor respondió con 404. Esto sugiere que la API no encuentra el predio con ID {registered_plot_id}."
+        )
+        print(
+            "⚠️ Verifica que la vista permite acceder a todos los predios y no solo a los del usuario autenticado."
+        )
 
     # 🔹 Verificar que el usuario normal NO pueda acceder al predio del administrador
-    assert response.status_code in [status.HTTP_403_FORBIDDEN, status.HTTP_404_NOT_FOUND], (
-        f"❌ Un usuario sin permisos pudo acceder a la información del predio: {response.data}"
+    assert response.status_code in [
+        status.HTTP_403_FORBIDDEN,
+        status.HTTP_404_NOT_FOUND,
+    ], f"❌ Un usuario sin permisos pudo acceder a la información del predio: {response.data}"
+
+    print(
+        "✅ Test completado con éxito. Un usuario normal no puede ver predios de otros usuarios."
     )
-
-    print("✅ Test completado con éxito. Un usuario normal no puede ver predios de otros usuarios.")
-
-
-
-
-
-
-

@@ -4,15 +4,16 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('plots_lots', '0008_merge_20250319_1052'),
+        ("plots_lots", "0008_merge_20250319_1052"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='plot',
-            name='plot_extension',
-            field=models.DecimalField(decimal_places=2, max_digits=8, verbose_name='Extensión de tierra'),
+            model_name="plot",
+            name="plot_extension",
+            field=models.DecimalField(
+                decimal_places=2, max_digits=8, verbose_name="Extensión de tierra"
+            ),
         ),
     ]

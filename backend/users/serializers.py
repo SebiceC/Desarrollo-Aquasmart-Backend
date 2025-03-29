@@ -1,7 +1,14 @@
 from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
 from API.sendmsn import send_email2
-from .models import DocumentType, PersonType, CustomUser, Otp, UserUpdateLog, LoginRestriction
+from .models import (
+    DocumentType,
+    PersonType,
+    CustomUser,
+    Otp,
+    UserUpdateLog,
+    LoginRestriction,
+)
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth.password_validation import validate_password
 from .validate import (
@@ -22,6 +29,7 @@ from API.google.google_drive import create_folder, share_folder
 import os
 import re
 from auditlog.models import LogEntry
+
 
 class DocumentTypeSerializer(serializers.ModelSerializer):
     """
@@ -83,8 +91,8 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "drive_folder_id",
             "files",
         ]
-        read_only_fields = ('is_registered','drive_folder_id','date_joined')
-        
+        read_only_fields = ("is_registered", "drive_folder_id", "date_joined")
+
         extra_kwargs = {
             "document": {"validators": []},
             "email": {"validators": []},
@@ -128,6 +136,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
         return user
 
+
 class LogEntrySerializer(serializers.ModelSerializer):
     """
     Serializer para el modelo LogEntry de auditlog.
@@ -135,7 +144,8 @@ class LogEntrySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = LogEntry
-        fields = ['timestamp', 'actor', 'action', 'changes', 'remote_addr']
+        fields = ["timestamp", "actor", "action", "changes", "remote_addr"]
+
 
 class LoginSerializer(serializers.Serializer):
     """
@@ -174,7 +184,11 @@ class LoginSerializer(serializers.Serializer):
 
         user = validate_user_exist(document)
         if not user.is_registered:
-            raise serializers.ValidationError({"detail": "Usuario en espera de validar su pre-registro. Póngase en contacto con soporte para mas información."})     
+            raise serializers.ValidationError(
+                {
+                    "detail": "Usuario en espera de validar su pre-registro. Póngase en contacto con soporte para mas información."
+                }
+            )
 
         if not user.is_active:
             raise PermissionDenied(
@@ -265,7 +279,7 @@ class GenerateOtpLoginSerializer(serializers.Serializer):
 
         # Simulación de envío de correo/SMS
         try:
-            send_email2(user.email, otp_generado, purpose="login",name=user.first_name)
+            send_email2(user.email, otp_generado, purpose="login", name=user.first_name)
         except Exception as e:
             raise serializers.ValidationError(f"Error al enviar el correo: {str(e)}")
 
@@ -321,7 +335,9 @@ class GenerateOtpPasswordRecoverySerializer(serializers.Serializer):
 
         # Intentar enviar OTP por correo
         try:
-            send_email2(user.email, otp_generado, purpose="recover",name=user.first_name )
+            send_email2(
+                user.email, otp_generado, purpose="recover", name=user.first_name
+            )
         except Exception as e:
             raise serializers.ValidationError(
                 f"Hubo un problema al enviar el código. Inténtalo más tarde. {e}"
@@ -523,11 +539,18 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = [
-            'email', 'document', 'document_type_name', 
-            'first_name', 'last_name', 'phone', 
-            'address', 'person_type_name','drive_folder_id'
-        ] 
-        
+            "email",
+            "document",
+            "document_type_name",
+            "first_name",
+            "last_name",
+            "phone",
+            "address",
+            "person_type_name",
+            "drive_folder_id",
+        ]
+
+
 class UserProfileUpdateSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True, allow_blank=False)
     phone = serializers.CharField(required=True, allow_blank=False)
@@ -546,7 +569,9 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
         # Verifica si el usuario puede realizar una actualización
         user = self.instance
         update_log, created = UserUpdateLog.objects.get_or_create(user=user)
-        can_update, message = update_log.can_update(updating_user=self.context["request"].user)
+        can_update, message = update_log.can_update(
+            updating_user=self.context["request"].user
+        )
         if not can_update:
             raise serializers.ValidationError(message)
 
@@ -566,13 +591,15 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
         return value
 
     def validate_phone(self, value):
-        """Evita que el número de teléfono sea el mismo, contenga letras o esté vacío."""   
-        actual_phone = self.instance.phone       
-        
+        """Evita que el número de teléfono sea el mismo, contenga letras o esté vacío."""
+        actual_phone = self.instance.phone
+
         if actual_phone == value:
-            raise serializers.ValidationError("El telefono a actualizar no puede ser el mismo que el actual.")
-                       
-        validate_only_number_phone(value)        
+            raise serializers.ValidationError(
+                "El telefono a actualizar no puede ser el mismo que el actual."
+            )
+
+        validate_only_number_phone(value)
         return value
 
     def update(self, instance, validated_data):

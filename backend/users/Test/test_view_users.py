@@ -76,8 +76,12 @@ def test_view_users_list(api_client, admin_user, all_users):
     login_data = {"document": admin_user.document, "password": "AdminPass123"}
     login_response = api_client.post(login_url, login_data)
 
-    assert login_response.status_code == status.HTTP_200_OK, f"Error en login: {login_response.data}"
-    assert "message" in login_response.data, "❌ No se recibió un mensaje de confirmación de envío de OTP."
+    assert (
+        login_response.status_code == status.HTTP_200_OK
+    ), f"Error en login: {login_response.data}"
+    assert (
+        "message" in login_response.data
+    ), "❌ No se recibió un mensaje de confirmación de envío de OTP."
 
     # 🔹 Paso 2: Verificar que el OTP ha sido generado en la base de datos
     otp_instance = Otp.objects.filter(user=admin_user, is_login=True).first()
@@ -88,7 +92,9 @@ def test_view_users_list(api_client, admin_user, all_users):
     otp_data = {"document": admin_user.document, "otp": otp_instance.otp}
     otp_response = api_client.post(otp_validation_url, otp_data)
 
-    assert otp_response.status_code == status.HTTP_200_OK, f"Error al validar OTP: {otp_response.data}"
+    assert (
+        otp_response.status_code == status.HTTP_200_OK
+    ), f"Error al validar OTP: {otp_response.data}"
     assert "token" in otp_response.data, "❌ No se recibió un token tras validar el OTP."
 
     # 🔹 Paso 4: Usar el token para obtener la lista de usuarios
@@ -98,15 +104,17 @@ def test_view_users_list(api_client, admin_user, all_users):
     list_users_url = reverse("customuser-list")  # 🔹 Endpoint para listar usuarios
     response = api_client.get(list_users_url, **headers)
 
-    assert response.status_code == status.HTTP_200_OK, f"Error al obtener la lista de usuarios: {response.data}"
+    assert (
+        response.status_code == status.HTTP_200_OK
+    ), f"Error al obtener la lista de usuarios: {response.data}"
 
     # 🔹 Verificar que la API devuelve la cantidad correcta de usuarios
     total_users_db = CustomUser.objects.count()
     total_users_api = len(response.data)
 
-    assert total_users_api == total_users_db, (
-        f"❌ Se esperaban {total_users_db} usuarios, pero la API devolvió {total_users_api}."
-    )
+    assert (
+        total_users_api == total_users_db
+    ), f"❌ Se esperaban {total_users_db} usuarios, pero la API devolvió {total_users_api}."
 
     # 🔹 Verificar que cada usuario tiene los atributos requeridos
     required_fields = ["document", "first_name", "last_name"]
@@ -114,4 +122,6 @@ def test_view_users_list(api_client, admin_user, all_users):
         for field in required_fields:
             assert field in user_data, f"❌ Falta el campo '{field}' en la respuesta."
 
-    print("✅ Test completado con éxito. Se listaron correctamente los usuarios del sistema.")
+    print(
+        "✅ Test completado con éxito. Se listaron correctamente los usuarios del sistema."
+    )

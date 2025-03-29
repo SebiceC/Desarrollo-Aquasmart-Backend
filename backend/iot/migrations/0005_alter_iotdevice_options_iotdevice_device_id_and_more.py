@@ -4,25 +4,34 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('iot', '0004_alter_iotdevice_characteristics'),
+        ("iot", "0004_alter_iotdevice_characteristics"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='iotdevice',
-            options={'verbose_name': 'Dispositivo IoT', 'verbose_name_plural': 'Dispositivos IoT'},
+            name="iotdevice",
+            options={
+                "verbose_name": "Dispositivo IoT",
+                "verbose_name_plural": "Dispositivos IoT",
+            },
         ),
         migrations.AddField(
-            model_name='iotdevice',
-            name='device_id',
-            field=models.CharField(default=0, max_length=9, unique=True, verbose_name='ID del Dispositivo'),
+            model_name="iotdevice",
+            name="device_id",
+            field=models.CharField(
+                default=0, max_length=9, unique=True, verbose_name="ID del Dispositivo"
+            ),
             preserve_default=False,
         ),
         migrations.AlterField(
-            model_name='iotdevice',
-            name='is_active',
-            field=models.BooleanField(db_index=True, default=True, help_text='Indica si el dispositivo está habilitado', verbose_name='estado dispositivo'),
+            model_name="iotdevice",
+            name="is_active",
+            field=models.BooleanField(
+                db_index=True,
+                default=True,
+                help_text="Indica si el dispositivo está habilitado",
+                verbose_name="estado dispositivo",
+            ),
         ),
     ]
