@@ -150,7 +150,7 @@ class LoginSerializer(serializers.Serializer):
 
         # Verificar si el usuario está bloqueado
         if login_restriction and login_restriction.is_blocked():
-            raise serializers.ValidationError({"detail": f"Demasiados intentos fallidos. Inténtalo de nuevo después {login_restriction.blocked_until.strftime('%d/%m/%Y %I:%M %p')}."})
+            raise serializers.ValidationError({"detail": f"Demasiados intentos fallidos. Inténtalo de nuevo después {login_restriction.blocked_until.strftime('%d/%m/%Y %I:%M %p') if login_restriction.blocked_until else 'un tiempo'}."})
 
         # Validar la contraseña
         if not user.check_password(password):
