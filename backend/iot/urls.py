@@ -4,7 +4,7 @@ from .views import (
     DeactivateIoTDevice,DeviceTypeListCreateView, 
     DeviceTypeDetailView,DeviceTypeUpdateView, 
     DeviceTypeDeleteView,IoTDeviceListView,
-    IoTDeviceDetailView, IoTDeviceUpdateView)
+    IoTDeviceDetailView, IoTDeviceUpdateView, UpdateValveFlowView)
 
 urlpatterns = [
     #endpoint dispositivo iot
@@ -19,4 +19,6 @@ urlpatterns = [
     path('device-types/<str:device_id>', DeviceTypeDetailView.as_view(), name='get_device_type'),  # 🔹 Ver uno GET
     path('device-types/<str:device_id>/update', DeviceTypeUpdateView.as_view(), name='update_device_type'),  # 🔹 Actualizar PUT
     path('device-types/<str:device_id>/delete', DeviceTypeDeleteView.as_view(), name='delete_device_type'),  # 🔹 Eliminar DELETE
+    #Endpoint para actualizar el caudal de una válvula
+    path('update-flow/<str:iot_id>', UpdateValveFlowView.as_view(), name='update_valve_flow')  # 🔹 Actualizar caudal PUT
 ]
