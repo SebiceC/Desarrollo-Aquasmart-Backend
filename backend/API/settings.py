@@ -77,9 +77,11 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'API.urls'
 
+
 ESP32_COMM_MODE = 'http'  
 ESP32_HTTP_URL = 'http://192.168.20.46/setangle'  # Endpoint específico para el servo
 ESP32_HTTP_TIMEOUT = 5  
+
 
 TEMPLATES = [
     {
@@ -236,7 +238,7 @@ USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = True
+USE_TZ = False
 
 
 # Static files (CSS, JavaScript, Images)
