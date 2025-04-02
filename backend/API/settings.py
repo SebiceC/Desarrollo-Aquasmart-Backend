@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "AquaSmart",
     'auditlog',
     'caudal',
+    'servo',
 ]
 
 AUTH_USER_MODEL ='users.CustomUser'
