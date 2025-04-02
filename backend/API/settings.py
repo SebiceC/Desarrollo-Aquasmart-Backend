@@ -77,6 +77,12 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'API.urls'
 
+ESP32_COMM_MODE = 'serial'  
+ESP32_SERIAL_PORT = 'COM4'   
+ESP32_BAUD_RATE = 115200     
+ESP32_HTTP_URL = 'http://192.168.1.100/servo' 
+ESP32_SIMULATION = False 
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
