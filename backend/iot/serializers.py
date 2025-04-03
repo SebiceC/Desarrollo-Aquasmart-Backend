@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from .models import IoTDevice, DeviceType, VALVE_48_ID, VALVE_4_ID
 from plots_lots.models import Plot, Lot
+from django.core.validators import MaxValueValidator, MinValueValidator
+
 
 class IoTDeviceSerializer(serializers.ModelSerializer):
     iot_id = serializers.CharField(read_only=True)  # ID generado automáticamente
@@ -25,17 +27,23 @@ class IoTDeviceSerializer(serializers.ModelSerializer):
         owner_name = data.get('owner_name', '').strip()
         actual_flow = data.get('actual_flow')
 
-        # 1️⃣ Si `id_plot` tiene dueño y `owner_name` se envía en la petición, lanzar error
+        # Si `id_plot` tiene dueño y `owner_name` se envía en la petición, lanzar error
         if id_plot and id_plot.owner and owner_name:
             raise serializers.ValidationError({"owner_name": "El propietario ya se obtiene del predio y no debe enviarse manualmente."})
 
-        # 2️⃣ Si `id_lot` está presente, validar que pertenece al `id_plot`
+        # Si se asigna un lote pero no el predio
+        if id_lot and not id_plot:
+            raise serializers.ValidationError({
+                "id_plot": "El lote fue asignado sin su predio correspondiente."
+            })
+        
+        # Si `id_lot` está presente, validar que pertenece al `id_plot`
         if id_lot and id_plot and id_lot.plot != id_plot:
             raise serializers.ValidationError({
                 "id_lot": "El lote no pertenece al predio especificado."
             })
 
-        # Validaciones específicas para válvulas
+        # Validar que el dispositivo sea una válvula
         if device_type.device_id in [VALVE_48_ID, VALVE_4_ID]:
             # Validar que actual_flow esté presente para válvulas
             if actual_flow is None:
@@ -43,50 +51,56 @@ class IoTDeviceSerializer(serializers.ModelSerializer):
                     "actual_flow": "El caudal actual es requerido para válvulas."
                 })
 
+            # Validaciones específicas para válvula de 48"
             if device_type.device_id == VALVE_48_ID:
+                # Verificar que no exista otra válvula de 48"
+                if IoTDevice.objects.filter(device_type_id=VALVE_48_ID).exists():
+                    raise serializers.ValidationError(
+                        "Ya existe una válvula de 48\" en el distrito."
+                    )
+                
                 # La válvula de 48" no debe asignarse a ningún predio ni lote
                 if id_plot or id_lot:
                     raise serializers.ValidationError(
                         "La válvula de 48\" no puede asignarse a predios ni lotes."
                     )
                 
-                # Verificar que no exista otra válvula de 48"
-                if IoTDevice.objects.filter(device_type_id=VALVE_48_ID).exists():
-                    raise serializers.ValidationError(
-                        "Ya existe una válvula de 48\" en el sistema."
-                    )
-
+            # Validaciones específicas para válvula de 4"
             elif device_type.device_id == VALVE_4_ID:
-                # Validar que se asigne a un predio o a un lote, pero no a ambos
-                if id_plot and id_lot:
-                    raise serializers.ValidationError(
-                        "Una válvula de 4\" debe asignarse a un predio O a un lote, no a ambos."
-                    )
+                # Validar que se asigne a un predio o a un lote
                 if not id_plot and not id_lot:
                     raise serializers.ValidationError(
                         "Una válvula de 4\" debe asignarse a un predio o a un lote."
                     )
                 
-                # Validar que no haya más de una válvula por predio
+                # Validar que no haya más de una válvula de 4" por predio
                 if id_plot and not id_lot:
-                    if IoTDevice.objects.filter(
-                        device_type_id=VALVE_4_ID,
-                        id_plot=id_plot,
-                        id_lot__isnull=True
-                    ).exists():
+                    queryset = IoTDevice.objects.filter(
+                    device_type_id=VALVE_4_ID,
+                    id_plot=id_plot,
+                    id_lot__isnull=True
+                )
+                    if self.instance:  # Si es una actualización, excluir el dispositivo actual
+                        queryset = queryset.exclude(iot_id=self.instance.iot_id)
+
+                    if queryset.exists():
                         raise serializers.ValidationError(
-                            "Ya existe una válvula de 4\" asignada a este predio."
+                            "Ya existe una válvula asignada a este predio."
                         )
                 
-                # Validar que no haya más de una válvula por lote
+                # Validar que no haya más de una válvula de 4" por lote
                 if id_lot and not id_plot:
-                    if IoTDevice.objects.filter(
-                        device_type_id=VALVE_4_ID,
+                    queryset = IoTDevice.objects.filter(
+                    device_type_id=VALVE_4_ID,
                         id_lot=id_lot,
                         id_plot__isnull=True
-                    ).exists():
+                )
+                    if self.instance:  # Si es una actualización, excluir el dispositivo actual
+                        queryset = queryset.exclude(iot_id=self.instance.iot_id)
+
+                    if queryset.exists():
                         raise serializers.ValidationError(
-                            "Ya existe una válvula de 4\" asignada a este lote."
+                            "Ya existe una válvula asignada a este lote."
                         )
         else:
             # Para dispositivos que no son válvulas, actual_flow debe ser None
@@ -135,7 +149,7 @@ class DeviceTypeSerializer(serializers.ModelSerializer):
 
 # 🔹 Actualizar el caudal de una válvula por iot_id
 class UpdateValveFlowSerializer(serializers.ModelSerializer):
-    actual_flow = serializers.FloatField(required=True)
+    actual_flow = serializers.FloatField(required=True, validators=[MinValueValidator(0), MaxValueValidator(180)])
 
     class Meta:
         model = IoTDevice
@@ -149,9 +163,6 @@ class UpdateValveFlowSerializer(serializers.ModelSerializer):
         
         # Valida que el dispositivo sea una válvula usando la instancia, no los datos de entrada
         if device.device_type.device_id not in [VALVE_48_ID, VALVE_4_ID]:
-            raise serializers.ValidationError("Solo se puede actualizar el caudal de válvulas.")
-        
-        if data.get('actual_flow', 0) < 0:
-            raise serializers.ValidationError("El caudal no puede ser negativo.")
+            raise serializers.ValidationError("Solo se puede actualizar el caudal para válvulas.")
         
         return data
