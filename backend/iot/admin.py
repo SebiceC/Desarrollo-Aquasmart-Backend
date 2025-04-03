@@ -10,7 +10,7 @@ class DeviceTypeAdmin(admin.ModelAdmin):
 
 @admin.register(IoTDevice)
 class IoTDeviceAdmin(admin.ModelAdmin):
-    list_display = ('iot_id', 'name', 'device_type', 'is_active', 'id_plot', 'id_lot', 'actual_flow')
+    list_display = ('iot_id', 'name', 'device_type', 'is_active', 'id_plot', 'id_lot')
     search_fields = ('iot_id', 'name', 'device_type__name')
     list_filter = ('is_active', 'device_type')  # Filtros en el admin
     ordering = ('iot_id',)

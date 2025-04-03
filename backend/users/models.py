@@ -203,7 +203,7 @@ class LoginRestriction(models.Model):
     
     def block_user(self):
         """Bloquea al usuario por 30 minutos"""
-        self.blocked_until = now() + timedelta(hours=0.5)
+        self.blocked_until = now() + timedelta(minutes=1)
         self.attempts = 0  # Reiniciar intentos
         self.save()
     
@@ -243,8 +243,8 @@ class UserUpdateLog(models.Model):
             self.save()
 
         # Calcula el final de la semana personalizada (7 días después de la primera actualización)
-        end_of_week = self.first_update_date + timedelta(days=6)
-        #end_of_week = self.first_update_date + timedelta(seconds=10)
+        #end_of_week = self.first_update_date + timedelta(days=6)
+        end_of_week = self.first_update_date + timedelta(seconds=10)
 
         # Si la fecha actual está fuera de la semana personalizada, reinicia el contador
         if today > end_of_week:
