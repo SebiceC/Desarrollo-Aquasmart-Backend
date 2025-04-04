@@ -98,6 +98,8 @@ class CustomUser(AbstractUser):
     objects = UserManager()
     
     class Meta:
+        verbose_name = "Usuario"
+        verbose_name_plural = "Usuarios"
         permissions = [
             ("can_toggle_is_active", "Puede cambiar el estado de is_active"),
             ("can_toggle_is_registered", "Puede cambiar el estado de is_registered"),
@@ -157,7 +159,11 @@ class DocumentType(models.Model):
     typeName = models.CharField(max_length=50, verbose_name="Nombre del Tipo de Documento")
 
     def __str__(self):
-        return f"{self.documentTypeId} - {self.typeName}"  
+        return f"{self.documentTypeId} - {self.typeName}"
+    
+    class Meta:
+        verbose_name = "Tipo de documento"
+        verbose_name_plural = "Tipos de documento"
 
 class PersonType(models.Model):
     """
@@ -169,6 +175,10 @@ class PersonType(models.Model):
 
     def __str__(self):
         return f"{self.personTypeId} - {self.typeName}"
+    
+    class Meta:
+        verbose_name = "Tipos de persona"
+        verbose_name_plural = "Tipos de persona"
     
 class LoginRestriction(models.Model):
     user = models.ForeignKey(

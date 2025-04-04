@@ -21,6 +21,10 @@ class DeviceType(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.device_id})"
+    
+    class Meta:
+        verbose_name = "Tipo de dispositivo IoT"
+        verbose_name_plural = "Tipos de dispositivos IoT"
 
 # Constantes para tipos de válvulas
 VALVE_48_ID = '05' # ID para válvula de 48"
