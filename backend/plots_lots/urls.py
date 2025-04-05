@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import PlotViewSet, LotViewSet,SoilTypeListCreateView,SoilTypeRetrieveUpdateDestroyView
+from .views import PlotViewSet, LotViewSet,SoilTypeListCreateView,SoilTypeRetrieveUpdateDestroyView, CropTypeListAPIView
 
 urlpatterns = [
     # Rutas para predios
@@ -17,8 +17,7 @@ urlpatterns = [
     path('lots/<str:id_lot>/update', LotViewSet.as_view({'put': 'update', 'patch': 'partial_update'}), name='lot-update'),
     path('lots/<str:id_lot>/desactivate', LotViewSet.as_view({'post': 'inactive'}), name='deactivate-lot'),
     path('lots/<str:id_lot>/activate', LotViewSet.as_view({'post': 'active'}), name='activate-lot'),
-    
-    # Rutas para lotes
     path('soil-types', SoilTypeListCreateView.as_view(), name='soil-type-list-create'), #Metodos del endpoint Get lista todos, post Crea
     path('soil-types/<int:pk>', SoilTypeRetrieveUpdateDestroyView.as_view(), name='soil-type-detail'), #Metodos del endpoint Get lista ,PUT modifica,DELETE elimina al ID que se pase
+    path('crop-types', CropTypeListAPIView.as_view(), name='crop-type-list'), # Listar tipos de cultivo
 ]

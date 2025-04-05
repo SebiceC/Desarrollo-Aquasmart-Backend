@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Plot, Lot, SoilType
+from .models import Plot, Lot, SoilType, CropType
 from users.models import CustomUser
 
 class PlotSerializer(serializers.ModelSerializer):
@@ -71,4 +71,10 @@ class LotDetailSerializer(LotSerializer):
 class SoilTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = SoilType
-        fields = ['id', 'name']        
+        fields = '__all__'
+
+# Serializar para el tipo de cultivo
+class CropTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CropType
+        fields = '__all__'

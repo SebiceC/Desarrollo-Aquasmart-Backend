@@ -1,11 +1,11 @@
 from rest_framework import viewsets, generics, status, response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from .models import Plot, Lot,SoilType
+from .models import Plot, Lot, SoilType, CropType
 from .serializers import (
     PlotSerializer, PlotDetailSerializer,
     LotSerializer, LotDetailSerializer,
-    SoilTypeSerializer
+    SoilTypeSerializer, CropTypeSerializer
 )
 from .permissions import IsOwnerOrAdmin
 
@@ -157,3 +157,9 @@ class SoilTypeRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         instance = self.get_object()
         self.perform_destroy(instance)
         return response.Response({"message": "Eliminado exitosamente"}, status=status.HTTP_200_OK)
+
+# Vista para listar tipos de cultivo (GET)
+class CropTypeListAPIView(generics.ListAPIView):
+    serializer_class = CropTypeSerializer
+    queryset = CropType.objects.all()
+    permission_classes = [IsAuthenticated]
