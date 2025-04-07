@@ -45,12 +45,6 @@ class IoTDeviceSerializer(serializers.ModelSerializer):
 
         # Validar que el dispositivo sea una válvula
         if device_type.device_id in [VALVE_48_ID, VALVE_4_ID]:
-            # Validar que actual_flow esté presente para válvulas
-            if actual_flow is None:
-                raise serializers.ValidationError({
-                    "actual_flow": "El caudal actual es requerido para válvulas."
-                })
-
             # Validaciones específicas para válvula de 48"
             if device_type.device_id == VALVE_48_ID:
                 # Verificar que no exista otra válvula de 48"
@@ -80,25 +74,23 @@ class IoTDeviceSerializer(serializers.ModelSerializer):
                     id_plot=id_plot,
                     id_lot__isnull=True
                 )
+
                     if self.instance:  # Si es una actualización, excluir el dispositivo actual
                         queryset = queryset.exclude(iot_id=self.instance.iot_id)
-
-                    if queryset.exists():
+                    if queryset.exists(): # Evaluar si ya existe una válvula de 4" asignada al predio
                         raise serializers.ValidationError(
                             "Ya existe una válvula asignada a este predio."
                         )
-                
+            
                 # Validar que no haya más de una válvula de 4" por lote
-                if id_lot and not id_plot:
+                if id_lot:
                     queryset = IoTDevice.objects.filter(
                     device_type_id=VALVE_4_ID,
-                        id_lot=id_lot,
-                        id_plot__isnull=True
+                    id_lot=id_lot
                 )
                     if self.instance:  # Si es una actualización, excluir el dispositivo actual
                         queryset = queryset.exclude(iot_id=self.instance.iot_id)
-
-                    if queryset.exists():
+                    if queryset.exists(): # Evaluar si ya existe una válvula de 4" asignada al lote
                         raise serializers.ValidationError(
                             "Ya existe una válvula asignada a este lote."
                         )
