@@ -112,6 +112,8 @@ class IoTDevice(models.Model):
                     id_plot=self.id_plot,
                     id_lot__isnull=True
                 )
+                    if self.iot_id:  # Si es una actualización, excluir el dispositivo actual
+                        queryset = queryset.exclude(iot_id=self.iot_id)
 
                     if queryset.exists():
                             raise ValidationError(
@@ -125,6 +127,8 @@ class IoTDevice(models.Model):
                     id_lot=self.id_lot,
                     id_plot__isnull=True
                 )
+                    if self.iot_id:  # Si es una actualización, excluir el dispositivo actual
+                        queryset = queryset.exclude(iot_id=self.iot_id)
 
                     if queryset.exists():
                             raise ValidationError(
