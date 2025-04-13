@@ -13,3 +13,14 @@ class HasChangesSerializer(serializers.ModelSerializer):
             if old_value != new_value:
                 return True
         return False
+    
+    def validate(self, data):
+        """Validación a nivel de objeto"""
+        # Validar campos adicionales no permitidos
+        extra_fields = set(self.initial_data.keys()) - set(self.fields.keys())
+        if extra_fields:
+            raise serializers.ValidationError(
+                f"Campos no permitidos: {', '.join(extra_fields)}"
+            )
+            
+        return data

@@ -3,12 +3,14 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.core.exceptions import ObjectDoesNotExist
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from .rates.models import TaxRate, ConsumptionRate
 from .company.models import Company
 from .rates.serializers import TaxRateSerializer, ConsumptionRateSerializer
 from .company.serializers import CompanySerializer
 
 class RatesAndCompanyView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]  # Requerir autenticación y ser admin
     @transaction.atomic # Si se produce un error, se revertirán todos los cambios en la base de datos
     def patch(self, request):
         try:
