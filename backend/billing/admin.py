@@ -18,7 +18,7 @@ class ConsumptionRateAdmin(admin.ModelAdmin):
     Vista de administración para el modelo ConsumptionRate.
     """
     list_display = ('id', 'crop_type', 'fixed_rate_cents', 'volumetric_rate_cents')
-    search_fields = ('nombre', 'unidad')
+    search_fields = ('id', 'crop_type')
     list_filter = ('id',)
     ordering = ('id',)
 
@@ -27,7 +27,7 @@ class CompanyAdmin(admin.ModelAdmin):
     """
     Vista de administración para el modelo Company.
     """
-    list_display = ('id_empresa', 'nombre', 'nit', 'address', 'phone', 'email')
-    search_fields = ('nombre', 'nit')
-    list_filter = ('nombre',)
-    ordering = ('id_empresa',)
+    list_display = ('id_company', 'name', 'nit', 'address', 'phone', 'email')
+    search_fields = ('name', 'nit')
+    list_filter = ('name',)
+    ordering = ('id_company',)

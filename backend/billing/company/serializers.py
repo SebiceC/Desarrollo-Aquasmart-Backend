@@ -7,14 +7,14 @@ class CompanySerializer(HasChangesSerializer):
         model = Company
         fields = '__all__'
         extra_kwargs = {
-            'nombre': {'required': False},
+            'name': {'required': False},
             'nit': {'required': False},
             'address': {'required': False},
             'phone': {'required': False},
             'email': {'required': False},
         }
     
-    def validate_nombre(self, value):
+    def validate_name(self, value):
         """Validar que el nombre tenga entre 1 y 60 caracteres"""
         if len(value) < 1 or len(value) > 60:
             raise serializers.ValidationError("El nombre debe tener entre 1 y 60 caracteres.")
