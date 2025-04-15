@@ -27,7 +27,7 @@ class CompanyAdmin(admin.ModelAdmin):
     """
     Vista de administración para el modelo Company.
     """
-    list_display = ('id_empresa', 'nombre', 'nit', 'ciudad')
-    search_fields = ('nombre', 'nit', 'ciudad')
-    list_filter = ('ciudad',)
+    list_display = ('id_empresa', 'nombre', 'nit', 'address', 'phone', 'email')
+    search_fields = ('nombre', 'nit')
+    list_filter = ('nombre',)
     ordering = ('id_empresa',)
