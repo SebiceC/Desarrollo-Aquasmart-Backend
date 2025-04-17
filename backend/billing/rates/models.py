@@ -27,11 +27,17 @@ class TaxRate(models.Model):
         verbose_name_plural = "Tarifas de Impuesto"
 
 
-class ConsumptionRate(models.Model):
+class FixedConsumptionRate(models.Model):
     """
-    Modelo para almacenar tasas de consumo para diferentes tipos de cultivos.
-    Cada tipo de cultivo tendrá una tasa fija y una tasa volumétrica únicas.
+    Modelo para almacenar tasas de consumo fijas para diferentes tipos de cultivos.
+    Cada tipo de cultivo tendrá una tasa fija única.
     """
+    code = models.CharField(
+        max_length=3,
+        unique=True,
+        verbose_name="Código de la tarifa fija",
+        help_text="Código de la tarifa fija (e.j., TFA, TFP)"
+    )
     crop_type = models.OneToOneField(CropType, on_delete=models.CASCADE,
         verbose_name="Tipo de cultivo",
         help_text="Tipo de cultivo (e.j., Agricultura, Psicultura)"
@@ -40,22 +46,46 @@ class ConsumptionRate(models.Model):
         verbose_name="Tarifa fija",
         help_text="Tarifa fija por consumo en centavos"
     )
-    volumetric_rate_cents = models.PositiveIntegerField(
-        verbose_name="Tarifa volumétrica",
-        help_text="Tarifa por unidad de volumen (m³) en centavos"
-    )
 
     def fixed_rate_pesos(self):
             """Devuelve la tarija fija en pesos."""
             return self.fixed_rate_cents / 100
+
+    def __str__(self):
+        return f"{self.crop_type} (Fija: ${self.fixed_rate_pesos():.2f})"
+    
+    class Meta:
+        verbose_name = "Tarifa Fija de Consumo"
+        verbose_name_plural = "Tarifas Fijas de Consumo"
+
+
+class VolumetricConsumptionRate(models.Model):
+    """
+    Modelo para almacenar tasas de consumo volumétricas para diferentes tipos de cultivos.
+    Cada tipo de cultivo tendrá una tasa volumétrica única.
+    """
+    code = models.CharField(
+        max_length=3,
+        unique=True,
+        verbose_name="Código de la tarifa volumétrica",
+        help_text="Código de la tarifa volumétrica (e.j., TVA, TVP)"
+    )
+    crop_type = models.OneToOneField(CropType, on_delete=models.CASCADE,
+        verbose_name="Tipo de cultivo",
+        help_text="Tipo de cultivo (e.j., Agricultura, Psicultura)"
+    )
+    volumetric_rate_cents = models.PositiveIntegerField(
+        verbose_name="Tarifa volumétrica",
+        help_text="Tarifa por unidad de volumen (m³) en centavos"
+    )
 
     def volumetric_rate_pesos(self):
         """Devuelve la tarifa volumétrica en pesos."""
         return self.volumetric_rate_cents / 100
 
     def __str__(self):
-        return f"{self.crop_type} (Fija: ${self.fixed_rate_pesos():.2f}, Vol: ${self.volumetric_rate_pesos():.2f})"
+        return f"{self.crop_type} (Vol: ${self.volumetric_rate_pesos():.2f})"
     
     class Meta:
-        verbose_name = "Tarifa de Consumo"
-        verbose_name_plural = "Tarifas de Consumo"
+        verbose_name = "Tarifa Volumétrica de Consumo"
+        verbose_name_plural = "Tarifas Volumétricas de Consumo"

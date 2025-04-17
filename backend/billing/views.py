@@ -4,13 +4,14 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from .rates.models import TaxRate, ConsumptionRate
+from .rates.models import TaxRate, FixedConsumptionRate, VolumetricConsumptionRate
 from .company.models import Company
-from .rates.serializers import TaxRateSerializer, ConsumptionRateSerializer
+from .rates.serializers import TaxRateSerializer, FixedConsumptionRateSerializer, VolumetricConsumptionRateSerializer
 from .company.serializers import CompanySerializer
 
 class RatesAndCompanyView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]  # Requerir autenticación y ser admin
+    
     @transaction.atomic # Si se produce un error, se revertirán todos los cambios en la base de datos
     def patch(self, request):
         try:
@@ -72,23 +73,23 @@ class RatesAndCompanyView(APIView):
                 if updated_tax_rates:
                     response_data['tax_rates'] = updated_tax_rates
             
-            # --- Actualizar tarifas de consumo ---
-            if 'consumption_rates' in request.data:
-                consumption_rates_data = request.data['consumption_rates']
-                updated_consumption_rates = []
-                for consumption_data in consumption_rates_data:
+            # --- Actualizar tarifas de consumo fijo ---
+            if 'fixed_consumption_rates' in request.data:
+                fixed_rates_data = request.data['fixed_consumption_rates']
+                updated_fixed_rates = []
+                for fixed_data in fixed_rates_data:
                     try:
-                        instance = ConsumptionRate.objects.get(crop_type=consumption_data['crop_type'])
+                        instance = FixedConsumptionRate.objects.get(crop_type=fixed_data['crop_type'])
                     except ObjectDoesNotExist:
                         transaction.set_rollback(True)
                         return Response(
-                            {"error": f"Tipo de cultivo '{consumption_data['crop_type']}' no existe."},
+                            {"error": f"Tipo de cultivo '{fixed_data['crop_type']}' no existe en tarifas fijas."},
                             status=status.HTTP_404_NOT_FOUND
                         )
-                    serializer = ConsumptionRateSerializer(
-                        instance, 
-                        data=consumption_data, 
-                        partial=True  # <-- Actualización parcial
+                    serializer = FixedConsumptionRateSerializer(
+                        instance,
+                        data=fixed_data,
+                        partial=True
                     )
                     if not serializer.is_valid():
                         transaction.set_rollback(True)
@@ -96,11 +97,41 @@ class RatesAndCompanyView(APIView):
 
                     if serializer.has_changes():
                         serializer.save()
-                        updated_consumption_rates.append(serializer.data)
+                        updated_fixed_rates.append(serializer.data)
                         has_changes = True
-                
-                if updated_consumption_rates:
-                    response_data['consumption_rates'] = updated_consumption_rates
+
+                if updated_fixed_rates:
+                    response_data['fixed_consumption_rates'] = updated_fixed_rates
+
+            # --- Actualizar tarifas de consumo volumétrico ---
+            if 'volumetric_consumption_rates' in request.data:
+                volumetric_rates_data = request.data['volumetric_consumption_rates']
+                updated_volumetric_rates = []
+                for volumetric_data in volumetric_rates_data:
+                    try:
+                        instance = VolumetricConsumptionRate.objects.get(crop_type=volumetric_data['crop_type'])
+                    except ObjectDoesNotExist:
+                        transaction.set_rollback(True)
+                        return Response(
+                            {"error": f"Tipo de cultivo '{volumetric_data['crop_type']}' no existe en tarifas volumétricas."},
+                            status=status.HTTP_404_NOT_FOUND
+                        )
+                    serializer = VolumetricConsumptionRateSerializer(
+                        instance,
+                        data=volumetric_data,
+                        partial=True
+                    )
+                    if not serializer.is_valid():
+                        transaction.set_rollback(True)
+                        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+                    if serializer.has_changes():
+                        serializer.save()
+                        updated_volumetric_rates.append(serializer.data)
+                        has_changes = True
+
+                if updated_volumetric_rates:
+                    response_data['volumetric_consumption_rates'] = updated_volumetric_rates
 
 
             if not has_changes:
@@ -129,17 +160,20 @@ class RatesAndCompanyView(APIView):
         try:
             company = Company.objects.first()
             tax_rates = TaxRate.objects.all()
-            consumption_rates = ConsumptionRate.objects.all()
+            fixed_consumption_rates = FixedConsumptionRate.objects.all()
+            volumetric_consumption_rates = VolumetricConsumptionRate.objects.all()
 
             # Serializar datos
             company_serializer = CompanySerializer(company)
             tax_rates_serializer = TaxRateSerializer(tax_rates, many=True)
-            consumption_rates_serializer = ConsumptionRateSerializer(consumption_rates, many=True)
+            fixed_rates_serializer = FixedConsumptionRateSerializer(fixed_consumption_rates, many=True)
+            volumetric_rates_serializer = VolumetricConsumptionRateSerializer(volumetric_consumption_rates, many=True)
 
             return Response({
                 "company": company_serializer.data,
                 "tax_rates": tax_rates_serializer.data,
-                "consumption_rates": consumption_rates_serializer.data
+                "fixed_consumption_rates": fixed_rates_serializer.data,
+                "volumetric_consumption_rates": volumetric_rates_serializer.data
             }, status=status.HTTP_200_OK)
 
         except Exception as e:
