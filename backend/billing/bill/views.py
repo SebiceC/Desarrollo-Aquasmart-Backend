@@ -1,28 +1,29 @@
-
 from rest_framework import generics
 from .models import Bill
 from .serializers import BillSerializer
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import PermissionDenied
-from rest_framework.permissions import IsAdminUser
+from .permissions import IsOwnerOrAdmin  # Asegúrate de importar tu permiso
 
-
-class UserBillListView(generics.ListAPIView):
-    """Vista para obtener las facturas de un usuario específico."""
+class BillListView(generics.ListAPIView):
+    """Vista para obtener todas las facturas o solo las de un usuario."""
     serializer_class = BillSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
 
     def get_queryset(self):
-        """Filtra las facturas solo para el usuario logueado."""
+        """Devuelve solo las facturas del usuario si es un usuario normal, o todas las facturas si es un admin."""
         user = self.request.user
-        queryset = Bill.objects.filter(client=user)  # Filtra por el usuario logueado
-        return queryset
+        if user.is_staff:
+            return Bill.objects.all()  # Administradores pueden ver todas las facturas
+        return Bill.objects.filter(client=user)  # Usuarios solo pueden ver sus propias facturas
 
-class AdminBillListView(generics.ListAPIView):
-    """Vista para obtener todas las facturas, accesible solo para administradores."""
+class BillDetailView(generics.RetrieveAPIView):
+    """Vista para obtener el detalle de una factura específica."""
+    queryset = Bill.objects.all()
     serializer_class = BillSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAuthenticated, IsOwnerOrAdmin]  # Asegúrate de que esté el permiso
 
-    def get_queryset(self):
-        """Devuelve todas las facturas."""
-        return Bill.objects.all()
+    def get_object(self):
+        """Devuelve la factura asociada al pk, verificando el permiso del usuario."""
+        obj = super().get_object()
+        self.check_object_permissions(self.request, obj)  # Verifica permisos
+        return obj
