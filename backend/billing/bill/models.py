@@ -145,4 +145,13 @@ class Bill(models.Model):
         if self.code and not self.pdf_bill_name:
             self.pdf_bill_name = f"{self.code[:2]}_{self.code[2:]}"
 
+        # Asignar fecha de pago cuando el status cambia a 'pagada'
+        if self.pk:
+            old = Bill.objects.get(pk=self.pk)
+            if old.status != 'pagada' and self.status == 'pagada':
+                self.payment_date = timezone.now().date()
+        else:
+            if self.status == 'pagada':
+                self.payment_date = timezone.now().date()
+
         super().save(*args, **kwargs)
