@@ -57,6 +57,7 @@ class IoTDevice(models.Model):
         blank=True,
         validators=[MinValueValidator(0), MaxValueValidator(180)]
     )
+    registration_date = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de registro")
 
     def clean(self):
         """Validaciones personalizadas"""

@@ -17,7 +17,7 @@ class IoTDeviceSerializer(serializers.ModelSerializer):
         model = IoTDevice
         fields = ['iot_id', 'id_plot', 'id_lot', 'name', 'device_type',
         'is_active', 'characteristics', 'owner_name',
-        'device_type_name', 'actual_flow']
+        'device_type_name', 'actual_flow', 'registration_date']
 
     def validate(self, data):
         """ Validación personalizada """
