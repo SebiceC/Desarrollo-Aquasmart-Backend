@@ -6,7 +6,7 @@ from rest_framework import status
 from .serializers import IoTDeviceSerializer, DeviceTypeSerializer, UpdateValveFlowSerializer
 from .models import IoTDevice, DeviceType
 from django.shortcuts import get_object_or_404
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 class RegisterIoTDeviceView(APIView):
     def post(self, request, *args, **kwargs):
@@ -84,6 +84,7 @@ class UpdateValveFlowView(generics.UpdateAPIView):
     queryset = IoTDevice.objects.all()
     serializer_class = UpdateValveFlowSerializer
     lookup_field = 'iot_id'  # Buscar por iot_id
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()        

@@ -148,13 +148,17 @@ class UpdateValveFlowSerializer(serializers.ModelSerializer):
         fields = ['actual_flow']
 
     def validate(self, data):
-        device = self.instance  # Accede a la instancia actual del dispositivo
-        
+        device = self.instance
         if not device:
             raise serializers.ValidationError("Dispositivo no encontrado")
         
         # Valida que el dispositivo sea una válvula usando la instancia, no los datos de entrada
         if device.device_type.device_id not in [VALVE_48_ID, VALVE_4_ID]:
             raise serializers.ValidationError("Solo se puede actualizar el caudal para válvulas.")
-        
+
+        # Validar si el caudal solicitado es igual al actual
+        actual_flow = data.get('actual_flow')
+        if actual_flow is not None and device.actual_flow == actual_flow:
+            raise serializers.ValidationError("Ya tienes un caudal activo con ese valor. Debes solicitar un valor diferente.")
+
         return data
