@@ -53,9 +53,10 @@ class FlowChangeRequest(models.Model):
             # Si el status cambia de 'pendiente' a 'aprobada' o 'rechazada'
             if old.status == 'pendiente' and self.status in ['aprobada', 'rechazada']:
                 self.reviewed_at = timezone.now()
-                # Actualizar el caudal actual del dispositivo
-                self.device.actual_flow = self.requested_flow
-                self.device.save()
+                # Actualizar el caudal actual del dispositivo si el status es 'aprobada'
+                if self.status == 'aprobada':
+                    self.device.actual_flow = self.requested_flow
+                    self.device.save()
             # Si ya fue revisada, no permitir cambiar el status nuevamente
             elif old.status in ['aprobada', 'rechazada'] and self.status != old.status:
                 raise ValueError("No se puede cambiar el estado una vez que la solicitud ha sido revisada.")
