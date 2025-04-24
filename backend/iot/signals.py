@@ -18,20 +18,20 @@ def create_default_divice_types(sender, **kwargs):
    
     try:
         default_types = {
-            1:"Antena",
-            2:"Servidor",
-            3:"Medidor de Flujo 48’’",
-            4:"Medidor de Flujo 4’’",
-            5:"Válvula 48’’",
-            6:"Válvula 4’’",
-            7:"Panel Solar",
-            8:"Actuador 48’’",
-            9:"Actuador 4’’",
-            10:"Controlador de Carga",
-            11:"Batería",
-            12:"Convertidor de Voltaje",
-            13:"Microcontrolador",
-            14:"Traductor de Información TTL",   
+            "01":"Antena",
+            "02":"Servidor",
+            "03":"Medidor de Flujo 48’’",
+            "04":"Medidor de Flujo 4’’",
+            "05":"Válvula 48’’",
+            "06":"Válvula 4’’",
+            "07":"Panel Solar",
+            "08":"Actuador 48’’",
+            "09":"Actuador 4’’",
+            "10":"Controlador de Carga",
+            "11":"Batería",
+            "12":"Convertidor de Voltaje",
+            "13":"Microcontrolador",
+            "14":"Traductor de Información TTL",   
         }
 
         with transaction.atomic():
