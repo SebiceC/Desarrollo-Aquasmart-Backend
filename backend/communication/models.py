@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 from users.models import CustomUser
 from plots_lots.models import Lot, Plot
+from iot.models import IoTDevice, VALVE_4_ID
 
 class BaseFlowRequest(models.Model):
     STATUS_CHOICES = [
@@ -19,39 +20,79 @@ class BaseFlowRequest(models.Model):
     class Meta:
         abstract = True
 
-    def _validate_lot_has_valve4(self):
-        from iot.models import IoTDevice, VALVE_4_ID
-        device = IoTDevice.objects.filter(id_lot=self.lot, device_type__device_id=VALVE_4_ID).first()
-        if not device:
-            raise ValueError('El lote no tiene una válvula 4" asociada.')
-        return device
+    def __str__(self):
+        return f"{self.user} para {self.lot} ({self.status})"
 
-    def clean(self):
-        # Validar que el lote no sea vacío
+    def _validate_owner(self):
+        ''' Valida que el usuario solicitante sea dueño del predio '''
+        if self.user != self.lot.plot.owner:
+            raise ValueError("Solo el dueño del predio puede realizar una solicitud para el caudal de este lote.")
+
+    def _validate_lot(self):
+        ''' Validar que el lote se envíe en la solicitud '''
         if not self.lot:
             raise ValueError("El lote es obligatorio para la solicitud.")
-        # Asignar plot automáticamente desde el lote si es posible
+
+    def _validate_lot_has_valve4(self):
+        ''' Validar que el lote tenga asignada una válvula de 4" '''
+        device = IoTDevice.objects.filter(id_lot=self.lot, device_type__device_id=VALVE_4_ID).first()
+        if not device:
+            raise ValueError("El lote no tiene una válvula 4\" asociada.")
+        return device
+
+    def _validate_requested_flow(self):
+        ''' Asegura que el caudal solicitado sea válido '''
+        if self.requested_flow is None or self.requested_flow <= 0:
+            raise ValueError("Debe ingresar un caudal válido en L/s")
+        # Validar rango de caudal solicitado
+        if self.requested_flow < 1 or self.requested_flow >= 11.7:
+            raise ValueError("El caudal solicitado debe estar dentro del rango de 1 L/seg a 11.7 L/seg.")
+
+    def _validate_requested_flow_uniqueness(self):
+        ''' Valida que el caudal solicitado no sea igual al actual '''
+        device = IoTDevice.objects.filter(id_lot=self.lot, device_type__device_id=VALVE_4_ID).first()
+        if self.requested_flow is not None and device.actual_flow == self.requested_flow:
+            raise ValueError("Ya tienes un caudal activo con ese valor. Debes solicitar un valor diferente.")
+
+    def _validate_pending_request(self):
+        ''' Valida que no existan solicitudes pendientes para el mismo lote. '''
+        model = type(self)
+        if model.objects.filter(lot=self.lot, status='pendiente').exclude(pk=self.pk).exists():
+            raise ValueError("Ya existe una solicitud pendiente para este lote.")
+
+    def _assign_plot_from_lot(self):
+        ''' Asigna el predio automáticamente desde el lote '''
         if self.lot and hasattr(self.lot, 'plot'):
             self.plot = self.lot.plot
 
-    def save(self, *args, **kwargs):
-        # Asignar plot automáticamente desde el lote
-        if self.lot and hasattr(self.lot, 'plot'):
-            self.plot = self.lot.plot
-
-        # Control de revisión
+    def _validate_status_transition(self):
+        ''' Valida que no se cambie el estado de la solicitud una vez fue revisada '''
         if self.pk:
             old = type(self).objects.get(pk=self.pk)
             if old.status == 'pendiente' and self.status in ['aprobada', 'rechazada']:
                 self.reviewed_at = timezone.now()
             elif old.status in ['aprobada', 'rechazada'] and self.status != old.status:
                 raise ValueError("No se puede cambiar el estado una vez que la solicitud ha sido revisada.")
-        else:
-            if self.status == 'pendiente':
-                self.reviewed_at = None
-            elif self.status in ['aprobada', 'rechazada']:
-                self.reviewed_at = timezone.now()
-        super().save(*args, **kwargs)
 
-    def __str__(self):
-        return f"{self.user} para {self.lot} ({self.status})"
+    def _apply_requested_flow_to_device(self):
+        ''' Aplica el caudal solicitado al dispositivo (válvula) asociado '''
+        device = IoTDevice.objects.filter(id_lot=self.lot, device_type__device_id=VALVE_4_ID).first()
+        if self.status == 'aprobada':
+            device.actual_flow = self.requested_flow
+            device.save()
+
+    def clean(self):
+        self._validate_status_transition()
+        self._validate_owner()
+        self._validate_lot()
+        self._validate_lot_has_valve4()
+
+    def save(self, *args, **kwargs):
+        self._assign_plot_from_lot()
+
+        # Asignar valores por defecto en la creación del objeto
+        if not self.pk:
+            self.status = 'pendiente'
+            self.reviewed_at = None
+
+        super().save(*args, **kwargs)

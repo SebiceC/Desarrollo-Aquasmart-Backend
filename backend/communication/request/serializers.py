@@ -1,8 +1,7 @@
 from django.utils import timezone
 from rest_framework import serializers
-from .models import FlowChangeRequest, FlowCancelRequest
+from .models import FlowChangeRequest, FlowCancelRequest, FlowActivationRequest
 from ..serializers import BaseFlowRequestSerializer, BaseRequestStatusSerializer
-from iot.models import IoTDevice, VALVE_4_ID
 
 class FlowChangeRequestSerializer(BaseFlowRequestSerializer):
     """Serializer para crear solicitudes de cambio de caudal."""
@@ -11,30 +10,6 @@ class FlowChangeRequestSerializer(BaseFlowRequestSerializer):
         model = FlowChangeRequest
         fields = '__all__'
         read_only_fields = ['user', 'device', 'plot', 'status', 'created_at', 'reviewed_at']
-
-    def validate(self, attrs):
-        attrs = super().validate(attrs)
-        lot = attrs.get('lot')
-        requested_flow = attrs.get('requested_flow')
-        user = self.context['request'].user
-
-        # Validar dueño del predio
-        if lot and lot.plot.owner != user:
-            raise serializers.ValidationError("Solo el dueño del predio puede solicitar el cambio de caudal para este lote.")
-
-        # Buscar el dispositivo IoT de tipo válvula 4" asociado al lote
-        device = IoTDevice.objects.filter(id_lot=lot, device_type__device_id=VALVE_4_ID).first()
-        if not device:
-            raise serializers.ValidationError("El lote no tiene una válvula 4\" asociada.")
-
-        # Validar caudal igual al actual
-        if requested_flow is not None and device.actual_flow == requested_flow:
-            raise serializers.ValidationError(
-                {"requested_flow": "Ya tienes un caudal activo con ese valor. Debes solicitar un valor diferente."}
-            )
-
-        attrs['device'] = device
-        return attrs
 
 
 class FlowChangeRequestStatusSerializer(BaseRequestStatusSerializer):
@@ -60,22 +35,30 @@ class FlowCancelRequestSerializer(BaseFlowRequestSerializer):
     def validate(self, attrs):
         attrs = super().validate(attrs)
         lot = attrs.get('lot')
-        user = self.context['request'].user
         cancel_type = attrs.get('cancel_type')
 
-        # Validar dueño del predio
-        if lot.plot.owner != user:
-            raise serializers.ValidationError(
-                {"owner": "Solo el dueño del predio puede solicitar la cancelación para este lote."}
-            )
-
-        # Restricción: No permitir temporal si ya existe definitiva pendiente/aprobada
         if cancel_type == 'temporal':
+            # No permitir temporal si ya existe definitiva pendiente
             if FlowCancelRequest.objects.filter(
-                lot=lot, cancel_type='definitiva', status__in=['pendiente', 'aprobada']
+                lot=lot, cancel_type='definitiva', status='pendiente'
             ).exists():
                 raise serializers.ValidationError(
-                    {"error": "No puedes solicitar una cancelación temporal si ya existe una definitiva pendiente o aprobada para este lote."}
+                    {"error": "No puedes solicitar una cancelación temporal si ya existe una definitiva pendiente para este lote."}
+                )
+            # No permitir dos temporales pendientes
+            if FlowCancelRequest.objects.filter(
+                lot=lot, cancel_type='temporal', status='pendiente'
+            ).exists():
+                raise serializers.ValidationError(
+                    {"error": "No puedes solicitar una cancelación temporal si ya existe una pendiente para este lote."}
+                )
+        elif cancel_type == 'definitiva':
+            # No permitir definitiva si ya existe definitiva pendiente
+            if FlowCancelRequest.objects.filter(
+                lot=lot, cancel_type='definitiva', status='pendiente'
+            ).exists():
+                raise serializers.ValidationError(
+                    {"error": "No puedes solicitar una cancelación definitiva si ya existe una definitiva pendiente para este lote."}
                 )
 
         return attrs
@@ -86,3 +69,19 @@ class FlowCancelRequestStatusSerializer(BaseRequestStatusSerializer):
 
     class Meta(BaseRequestStatusSerializer.Meta):
         model = FlowCancelRequest
+
+
+class FlowActivationRequestSerializer(BaseFlowRequestSerializer):
+    """Serializer para crear solicitudes de activación de caudal."""
+
+    class Meta(BaseFlowRequestSerializer.Meta):
+        model = FlowActivationRequest
+        fields = '__all__'
+        read_only_fields = ['user', 'plot', 'status', 'created_at', 'reviewed_at']
+
+
+class FlowActivationRequestStatusSerializer(BaseRequestStatusSerializer):
+    """Serializer para actualizar el estado de la solicitud de activación de caudal."""
+
+    class Meta(BaseRequestStatusSerializer.Meta):
+        model = FlowActivationRequest

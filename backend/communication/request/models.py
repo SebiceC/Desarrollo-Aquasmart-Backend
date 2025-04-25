@@ -4,8 +4,6 @@ from iot.models import IoTDevice, VALVE_4_ID
 
 class FlowChangeRequest(BaseFlowRequest):
     """Modelo para almacenar las solicitudes de cambio de caudal."""
-
-    device = models.ForeignKey(IoTDevice, on_delete=models.CASCADE, verbose_name="Dispositivo", help_text="Dispositivo IoT (válvula) asociado a la solicitud")
     requested_flow = models.FloatField(verbose_name="Caudal solicitado (L/s)", help_text="Valor del caudal solicitado en litros por segundo")
 
     class Meta(BaseFlowRequest.Meta):
@@ -17,29 +15,18 @@ class FlowChangeRequest(BaseFlowRequest):
 
     def clean(self):
         super().clean()
-        device = self._validate_lot_has_valve4()
-        # Validar caudal igual al actual
-        if self.requested_flow is not None and device.actual_flow == self.requested_flow:
-            raise ValueError("Ya tienes un caudal activo con ese valor. Debes solicitar un valor diferente.")
+        self._validate_pending_request()
+        self._validate_requested_flow()
+        self._validate_requested_flow_uniqueness()
 
     def save(self, *args, **kwargs):
-        # Asignar device automáticamente desde el lote
-        if self.lot:
-            device = IoTDevice.objects.filter(id_lot=self.lot, device_type__device_id=VALVE_4_ID).first()
-            if not device:
-                raise ValueError("El lote no tiene una válvula 4\" asociada.")
-            self.device = device
-
         super().save(*args, **kwargs)
-
-        # Lógica específica: actualizar caudal si se aprueba
-        if self.status == 'aprobada':
-            self.device.actual_flow = self.requested_flow
-            self.device.save()
+        self._apply_requested_flow_to_device()
 
 
 class FlowCancelRequest(BaseFlowRequest):
     """Modelo para almacenar las solicitudes de cancelación de caudal."""
+
     CANCEL_TYPE_CHOICES = [
         ('temporal', 'Temporal'),
         ('definitiva', 'Definitiva'),
@@ -51,10 +38,38 @@ class FlowCancelRequest(BaseFlowRequest):
         verbose_name = "Solicitud de cancelación de caudal"
         verbose_name_plural = "Solicitudes de cancelación de caudal"
 
-    # Validar que el lote tenga un dispositivo IoT de tipo válvula 4"
-    def clean(self):
-        super().clean()
-        self._validate_lot_has_valve4()
+    def __str__(self):
+        return f"{self.user} solicita cancelación {self.cancel_type} de caudal para {self.lot} ({self.status})"
+
+    def _apply_cancel_flow_to_device(self):
+        ''' Aplica la cancelación de caudal al dispositivo (válvula) asociado '''
+        device = IoTDevice.objects.filter(id_lot=self.lot, device_type__device_id=VALVE_4_ID).first()
+        if self.status == 'aprobada':
+            device.actual_flow = 0
+            device.save()
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self._apply_cancel_flow_to_device()
+
+
+class FlowActivationRequest(BaseFlowRequest):
+    """Modelo para solicitudes de activación de caudal."""
+    requested_flow = models.FloatField(verbose_name="Caudal solicitado (L/s)", help_text="Valor del caudal solicitado en litros por segundo")
+    observations = models.CharField(max_length=300, blank=True, null=True, verbose_name="Observaciones", help_text="Observaciones del usuario (opcional, hasta 300 caracteres)")
+
+    class Meta(BaseFlowRequest.Meta):
+        verbose_name = "Solicitud de activación de caudal"
+        verbose_name_plural = "Solicitudes de activación de caudal"
 
     def __str__(self):
-        return f"{self.user} solicita cancelación {self.cancel_type} para {self.lot} ({self.status})"
+        return f"{self.user} solicita activación de caudal para {self.lot} ({self.status})"
+
+    def clean(self):
+        super().clean()
+        self._validate_pending_request()
+        self._validate_requested_flow()
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self._apply_requested_flow_to_device()
