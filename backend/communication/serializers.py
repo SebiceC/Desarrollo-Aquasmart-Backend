@@ -15,53 +15,31 @@ class BaseFlowRequestSerializer(serializers.ModelSerializer):
     }
 
     def validate_lot(self, value):
-        # Validar que el lote no tenga una válvula de 4" asociada
+        ''' Validaciones del lote en la solicitud '''
         valve = IoTDevice.objects.filter(id_lot=value, device_type__device_id=VALVE_4_ID).first()
+        # Validar que el lote no tenga una válvula de 4" asociada
         if not valve:
             raise serializers.ValidationError("El lote no tiene una válvula 4\" asociada.")
+        # Valida que el lote en cuya solicitud está presente, esté habilitado
+        if value.is_activate == False:
+            raise serializers.ValidationError("No se puede realizar solicitud de caudal de un lote inhabilitado.")
         return value
 
     def validate_requested_flow(self, value):
-        # Validar que el caudal solicitado sea válido
-        if value is None or value <= 0:
-            raise serializers.ValidationError("Debe ingresar un caudal válido en L/s.")
-        # Validar rango de caudal solicitado
+        ''' Valida que el caudal solicitado sea válido '''
         if value < 1 or value >= 11.7:
             raise serializers.ValidationError("El caudal solicitado debe estar dentro del rango de 1 L/seg a 11.7 L/seg.")
         return value
 
-    def _validate_requested_flow_uniqueness(self, lot, requested_flow):
-        # Validar caudal igual al actual
-        device = IoTDevice.objects.filter(id_lot=lot, device_type__device_id=VALVE_4_ID).first()
-        if requested_flow is not None and device and device.actual_flow == requested_flow:
-            raise serializers.ValidationError(
-                {"requested_flow": "Ya tienes un caudal activo con ese valor. Debes solicitar un valor diferente."}
-            )
-
-    # def _validate_pending_request(self, lot):
-    #     ''' Valida que no existan solicitudes pendientes para el mismo lote '''
-    #     model = self.Meta.model
-    #     if model.objects.filter(lot=lot, status='pendiente').exists():
-    #         raise serializers.ValidationError(
-    #             {"error": "Ya existe una solicitud (cambio, cancelación o activación) pendiente para este lote. "
-    #             "Espere a que el administrador apruebe o rechace la solicitud pendiente, e inténtelo más tarde."}
-    #         )
-
     def validate(self, attrs):
         user = self.context['request'].user
         lot = attrs.get('lot')
-        # requested_flow = attrs.get('requested_flow')
 
         # Validar que el usuario (solicitante) sea dueño del predio
         if user != lot.plot.owner:
             raise serializers.ValidationError(
                 {"owner": "Solo el dueño del predio puede realizar una solicitud para el caudal de este lote."}
             )
-
-        # elif lot:
-        #     self._validate_pending_request(lot)
-        #     if requested_flow is not None:
-        #         self._validate_requested_flow_uniqueness(lot, requested_flow)
 
         return attrs
 
@@ -93,17 +71,31 @@ class BaseRequestStatusSerializer(serializers.ModelSerializer):
         fields = ['status', 'reviewed_at']
         read_only_fields = ['reviewed_at']
 
-    def validate_lot(self, value):
+    def _validate_lot(self):
+        ''' Validaciones del lote en la solicitud '''
+        lot = getattr(self.instance, 'lot', None)
+        valve = IoTDevice.objects.filter(id_lot=lot, device_type__device_id=VALVE_4_ID).first()
         # Validar que el lote no tenga una válvula de 4" asociada
-        valve = IoTDevice.objects.filter(id_lot=value, device_type__device_id=VALVE_4_ID).first()
         if not valve:
-            raise serializers.ValidationError("El lote no tiene una válvula 4\" asociada.")
-        return value
+            raise serializers.ValidationError(
+                {"error": "El lote no tiene una válvula 4\" asociada."}
+            )
+        # Valida que el lote en cuya solicitud está presente, esté habilitado
+        if lot.is_activate == False:
+            raise serializers.ValidationError(
+                {"error": "No se puede aprobar/rechazar una solicitud de caudal de un lote inhabilitado."
+            })
 
     def validate_status(self, value):
+        ''' Valida que el estado sea 'aprobada' o 'rechazada' '''
         if value not in ['aprobada', 'rechazada']:
             raise serializers.ValidationError("Solo se permite aprobar o rechazar la solicitud.")
         return value
+
+    def validate(self, attrs):
+        self._validate_lot()
+
+        return attrs
 
     def create(self, validated_data):
         # Asignar el usuario (solicitante) automáticamente
