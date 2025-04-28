@@ -66,7 +66,7 @@ class FlowCancelRequest(BaseFlowRequest):
 
     def _validate_pending_definitive_request(self):
         ''' Valida que no existan solicitudes pendientes de cancelación definitiva para el mismo lote. '''
-        if FlowCancelRequest.objects.filter(lot=self.lot, status='pendiente', cancel_type='definitiva').exclude(pk=self.pk).exists():
+        if self.status != 'rechazada' and FlowCancelRequest.objects.filter(lot=self.lot, status='pendiente', cancel_type='definitiva').exclude(pk=self.pk).exists():
             raise ValueError("El lote elegido cuenta con una solicitud de cancelación definitiva de caudal en curso.")
 
     def _check_caudal_flow_inactive(self):
@@ -75,15 +75,11 @@ class FlowCancelRequest(BaseFlowRequest):
         if self.cancel_type == 'temporal' and device.actual_flow in (0, None):
             raise ValueError("El caudal del lote está inactivo. No es necesario solicitar cancelación temporal.")
 
-    def _change_flow_cancel_request(self):
-        ''' Permite que el usuario cambie el tipo de cancelación (de temporal a definitiva) de caudal para el lote '''
+    def _auto_reject_temporary_cancel_request(self):
+        ''' Cambia el estado de una solicitud de cancelación temporal (de 'pendiente' a 'rechazada') si se crea una solicitud de cancelación definitiva '''
         flow_cancel_request = FlowCancelRequest.objects.filter(lot=self.lot, status='pendiente', cancel_type='temporal').exclude(pk=self.pk).first()
-        # print("flow_cancel_request", flow_cancel_request)
-        # print("self.cancel_type", self.cancel_type)
         if self.cancel_type == 'definitiva' and flow_cancel_request:
-            # print("flow_cancel_request.status ANTES", flow_cancel_request.status)
-            flow_cancel_request.status = 'rechazada'
-            # print("flow_cancel_request.status DESPUÉS", flow_cancel_request.status)
+            flow_cancel_request.status = 'rechazada' # Rechazar la solicitud temporal
             flow_cancel_request.observations = 'Rechazada de forma automática: El usuario ha solicitado una cancelación definitiva.'
             flow_cancel_request.save()
 
@@ -105,7 +101,7 @@ class FlowCancelRequest(BaseFlowRequest):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        self._change_flow_cancel_request()
+        self._auto_reject_temporary_cancel_request()
         self._apply_cancel_flow_to_device()
 
 
