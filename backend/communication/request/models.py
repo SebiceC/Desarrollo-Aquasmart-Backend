@@ -69,6 +69,12 @@ class FlowCancelRequest(BaseFlowRequest):
         if FlowCancelRequest.objects.filter(lot=self.lot, status='pendiente', cancel_type='definitiva').exclude(pk=self.pk).exists():
             raise ValueError("El lote elegido cuenta con una solicitud de cancelación definitiva de caudal en curso.")
 
+    def _check_caudal_flow_inactive(self):
+        ''' Verifica que el lote tenga un caudal activo '''
+        device = IoTDevice.objects.filter(id_lot=self.lot, device_type__device_id=VALVE_4_ID).first()
+        if self.cancel_type == 'temporal' and device.actual_flow in (0, None):
+            raise ValueError("El caudal del lote está inactivo. No es necesario solicitar cancelación temporal.")
+
     def _change_flow_cancel_request(self):
         ''' Permite que el usuario cambie el tipo de cancelación (de temporal a definitiva) de caudal para el lote '''
         flow_cancel_request = FlowCancelRequest.objects.filter(lot=self.lot, status='pendiente', cancel_type='temporal').exclude(pk=self.pk).first()
@@ -95,6 +101,7 @@ class FlowCancelRequest(BaseFlowRequest):
         super().clean()
         self._validate_pending_definitive_request()
         self._validate_pending_temporary_request()
+        self._check_caudal_flow_inactive()
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

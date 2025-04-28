@@ -98,6 +98,14 @@ class FlowCancelRequestSerializer(BaseFlowRequestSerializer):
                 {"error": "El lote elegido cuenta con una solicitud de cancelación definitiva de caudal en curso."}
             )
 
+    def _check_caudal_flow_inactive(self, cancel_type, lot):
+        ''' Verifica que el lote tenga un caudal activo '''
+        device = IoTDevice.objects.filter(id_lot=lot, device_type__device_id=VALVE_4_ID).first()
+        if cancel_type == 'temporal' and device.actual_flow in (0, None):
+            raise serializers.ValidationError(
+                {"error": "El caudal del lote está inactivo. No es necesario solicitar cancelación temporal."}
+            )
+
     def validate(self, attrs):
         attrs = super().validate(attrs)
         lot = attrs.get('lot')
@@ -106,6 +114,7 @@ class FlowCancelRequestSerializer(BaseFlowRequestSerializer):
         if lot:
             self._validate_pending_temporary_request(cancel_type, lot)
             self._validate_pending_definitive_request(lot)
+            self._check_caudal_flow_inactive(cancel_type, lot)
 
         if cancel_type == 'temporal':
             # No permitir temporal si ya existe definitiva pendiente
