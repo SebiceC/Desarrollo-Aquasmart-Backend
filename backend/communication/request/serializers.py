@@ -26,6 +26,13 @@ class FlowChangeRequestSerializer(BaseFlowRequestSerializer):
                 {"error": "El lote elegido ya cuenta con una solicitud de cambio de caudal en curso."}
             )
 
+    def _validate_pending_cancel_request(self, lot):
+        ''' Valida que no existan solicitudes pendientes de cancelación temporal y definitiva para el mismo lote. '''
+        if FlowCancelRequest.objects.filter(lot=lot, status='pendiente', cancel_type__in=['temporal', 'definitiva']).exists():
+            raise serializers.ValidationError(
+                {"error": "El lote elegido cuenta con una solicitud de cancelación de caudal en curso."}
+            )
+
     def _validate_requested_flow_uniqueness(self, lot, requested_flow):
         ''' Valida que el caudal solicitado no sea igual al actual '''
         device = IoTDevice.objects.filter(id_lot=lot, device_type__device_id=VALVE_4_ID).first()
@@ -42,6 +49,7 @@ class FlowChangeRequestSerializer(BaseFlowRequestSerializer):
         # Ejecutar validadores personalizados solo si los datos están presentes
         if lot:
             self._validate_pending_change_request(lot)
+            self._validate_pending_cancel_request(lot)
             if requested_flow is not None:
                 self._validate_requested_flow_uniqueness(lot, requested_flow)
 

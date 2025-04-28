@@ -24,6 +24,11 @@ class FlowChangeRequest(BaseFlowRequest):
         if FlowChangeRequest.objects.filter(lot=self.lot, status='pendiente').exclude(pk=self.pk).exists():
             raise ValueError("El lote elegido ya cuenta con una solicitud de cambio de caudal en curso.")
 
+    def _validate_pending_cancel_request(self):
+        ''' Valida que no existan solicitudes pendientes de cancelación temporal para el mismo lote. '''
+        if FlowCancelRequest.objects.filter(lot=self.lot, status='pendiente', cancel_type__in=['temporal', 'definitiva']).exists():
+            raise ValueError("El lote elegido cuenta con una solicitud de cancelación de caudal en curso.")
+
     def _validate_requested_flow_uniqueness(self):
         ''' Valida que el caudal solicitado no sea igual al actual '''
         device = IoTDevice.objects.filter(id_lot=self.lot, device_type__device_id=VALVE_4_ID).first()
@@ -34,6 +39,7 @@ class FlowChangeRequest(BaseFlowRequest):
         super().clean()
         self._check_caudal_flow_inactive()
         self._validate_pending_change_request()
+        self._validate_pending_cancel_request()
         self._validate_requested_flow()
         self._validate_requested_flow_uniqueness()
 
