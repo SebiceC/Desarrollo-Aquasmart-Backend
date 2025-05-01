@@ -123,8 +123,8 @@ class AsignacionAdmin(admin.ModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def estado_asignacion(self, obj):
-        return "✅ Activa" if obj.fecha_limite > timezone.now() else "⏰ Expirada"
-    estado_asignacion.short_description = 'Estado'
+        return "✅ SI" if obj.fecha_limite > timezone.now() else "⏰ Expirada"
+    estado_asignacion.short_description = 'Dentro de plazo?'
 
     def save_model(self, request, obj, form, change):
         try:
@@ -161,6 +161,9 @@ class InformeMantenimientoAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {
             'fields': ('reporte', 'asignacion', 'tecnico', 'estado', 'aprobado')
+        }),
+        ('Prueba informe', {
+            'fields': ('image_base64',)
         }),
         ('Solución', {
             'fields': ('descripcion_solucion', 'fecha_fin')

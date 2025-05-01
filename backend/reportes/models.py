@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-
+from django.core.exceptions import ValidationError
 User = get_user_model()
 
 class Reporte(models.Model):
@@ -67,6 +67,7 @@ class InformeMantenimiento(models.Model):
     asignacion = models.OneToOneField(Asignacion, on_delete=models.CASCADE, related_name='informe')
     tecnico = models.ForeignKey(User, on_delete=models.CASCADE)
     descripcion_solucion = models.TextField()
+    image_base64 = models.TextField(blank=True, null=True, verbose_name="Imagen del informe")
     fecha_inicio = models.DateTimeField(auto_now_add=True)
     fecha_fin = models.DateTimeField(null=True, blank=True)
     estado = models.CharField(
@@ -76,15 +77,21 @@ class InformeMantenimiento(models.Model):
     )
 
     aprobado = models.BooleanField(default=False, verbose_name="Aprobado por administrador")
+    def __str__(self):
+        return f"#{self.id} - {self.reporte.titulo}"
     
     def clean(self):
         # Validar que el técnico pertenezca al grupo correcto
         if not self.tecnico.groups.filter(name='Tecnicos').exists():
-            raise ValidationError("El usuario asignado no es un técnico autorizado")
+            raise ValidationError({'tecnico': "El usuario asignado no es un técnico autorizado"})
+        # Validar que el técnico sea el mismo que está en la asignación
+        if self.tecnico != self.asignacion.tecnico:
+            raise ValidationError({'tecnico': "Solo el técnico asignado puede registrar el informe"})
         
         # Validar que el informe completado tenga descripción
         if self.estado == 'COMPLETADO' and not self.descripcion_solucion:
-            raise ValidationError("Debe registrar la solución para completar el informe")
+            raise ValidationError({'descripcion_solucion': "Debe registrar la solución para completar el informe"})
+        
 
     def save(self, *args, **kwargs):
         if self.estado == 'COMPLETADO':
