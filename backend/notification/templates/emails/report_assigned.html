@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+            font-family: Arial, sans-serif;
+        }
+        .header {
+            color: #2c3e50;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="header">
+            <h2>Nueva asignación de reporte</h2>
+        </div>
+        
+        <p><strong>Reporte #{{ metadata.report_id }}</strong></p>
+        <p><strong>Título:</strong> {{ object.reporte.titulo }}</p>
+        <p><strong>Tipo:</strong> {{ object.reporte.get_tipo_display }}</p>
+        
+        <div style="margin: 15px 0; padding: 10px; background-color: #f8f9fa;">
+            <p><strong>Instrucciones:</strong></p>
+            <p>{{ metadata.instrucciones }}</p>
+        </div>
+        
+        <p><strong>Fecha Límite:</strong> {{ metadata.fecha_limite }}</p>
+        
+        <div class="footer">
+            <p>{{ app_name }} - Sistema de Gestión de Reportes</p>
+        </div>
+    </div>
+</body>
+</html>

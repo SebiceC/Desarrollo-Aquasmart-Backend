@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h2>Informe de Mantenimiento Completado</h2>
+    <p>El técnico <strong>{{ metadata.tecnico }}</strong> ha completado el reporte <strong>#{{ metadata.report_id }}</strong>:</p>
+    
+    <div style="background: #f5f5f5; padding: 10px; margin: 10px 0;">
+        <p><strong>Solución aplicada:</strong></p>
+        <p>{{ metadata.solucion }}</p>
+    </div>
+    
+    <p><strong>Fecha de completado:</strong> {{ metadata.fecha_completado }}</p>
+    <p>Revise los detalles en el sistema.</p>
+</body>
+</html>
