@@ -17,6 +17,14 @@ class WaterSupplyFailureReportSerializer(BaseFlowRequestSerializer):
 
     def validate(self, attrs):
         attrs = super().validate(attrs)
+        # Validar si ya existe un reporte pendiente para el usuario y lote
+        user = self.context['request'].user
+        lot = attrs.get('lot')      
+        repot_exists = WaterSupplyFailureReport.objects.filter(user=user, lot=lot, status='pendiente').exists()
+        if repot_exists:
+            raise serializers.ValidationError({
+            'error': "Ya tienes un reporte pendiente para este lote."
+        })
         return attrs
 
 class WaterSupplyFailureReportStatusSerializer(BaseRequestStatusSerializer):
