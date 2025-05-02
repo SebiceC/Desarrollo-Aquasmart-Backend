@@ -198,3 +198,15 @@ class FlowActivationRequestStatusSerializer(BaseRequestStatusSerializer):
 
     class Meta(BaseRequestStatusSerializer.Meta):
         model = FlowActivationRequest
+
+
+class AllFlowRequestsSerializer(serializers.Serializer):
+    """Serializer para listar todas las solicitudes de caudal."""
+    id = serializers.IntegerField()
+    user = serializers.CharField(source='user.document')
+    lot = serializers.CharField(source='lot.id_lot')
+    plot = serializers.CharField()
+    status = serializers.CharField()
+    type = serializers.CharField()
+    created_at = serializers.DateTimeField()
+    reviewed_at = serializers.DateTimeField()

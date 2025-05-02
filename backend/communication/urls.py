@@ -1,5 +1,5 @@
 from django.urls import path
-from communication.request.views import (FlowChangeRequestCreateView, FlowChangeRequestStatusView,
+from communication.request.views import (FlowChangeRequestCreateView, FlowRequestsListView, FlowRequestDetailView, FlowChangeRequestStatusView,
     FlowCancelRequestCreateView, FlowCancelRequestStatusView, FlowActivationRequestCreateView, FlowActivationRequestStatusView)
 from communication.reports.views import (
     WaterSupplyFailureReportCreateView,
@@ -8,7 +8,9 @@ from communication.reports.views import (
 from communication.application_report.views import ApplicationFailureReportCreateView
 
 urlpatterns = [
-    path('flow-change-request', FlowChangeRequestCreateView.as_view(), name='flow-change-request'), # Crear solicitud de cambio de caudal 
+    path('flow-change-request', FlowChangeRequestCreateView.as_view(), name='flow-change-request'), # Crear solicitud de cambio de caudal
+    path('flow-requests', FlowRequestsListView.as_view(), name='flow-requests'), # Listar todas las solicitudes de caudal (admin)
+    path('flow-requests/<str:tipo>/<int:pk>', FlowRequestDetailView.as_view(), name='detail-flow-request'), # Detallar solicitud de caudal
     path('flow-change-request/<int:pk>', FlowChangeRequestStatusView.as_view(), name='flow-change-request-status'), # Aprobar o rechazar solicitud de cambio de caudal (admin)
     path('flow-cancel-request', FlowCancelRequestCreateView.as_view(), name='flow-cancel-request'), # Crear solicitud de cancelación de caudal
     path('flow-cancel-request/<int:pk>', FlowCancelRequestStatusView.as_view(), name='flow-cancel-request-status'), # Aprobar o rechazar solicitud de cancelación de caudal (admin)
