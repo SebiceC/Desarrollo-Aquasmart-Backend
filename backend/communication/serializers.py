@@ -36,10 +36,11 @@ class BaseFlowRequestSerializer(serializers.ModelSerializer):
         lot = attrs.get('lot')
 
         # Validar que el usuario (solicitante) sea dueño del predio
-        if user != lot.plot.owner:
-            raise serializers.ValidationError(
-                {"owner": "Solo el dueño del predio puede realizar una solicitud para el caudal de este lote."}
-            )
+        if lot:
+            if user != lot.plot.owner:
+                raise serializers.ValidationError(
+                    {"owner": "Solo el dueño del predio puede realizar una solicitud para el caudal de este lote."}
+                )
 
         return attrs
 
