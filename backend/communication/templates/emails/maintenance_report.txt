@@ -1,0 +1,39 @@
+Informe de Mantenimiento #{{ report_id }}
+
+=================================
+DATOS BÁSICOS
+=================================
+• Asignación relacionada: #{{ assignment_id }}
+• Técnico: {{ technician }}
+• Supervisor: {{ supervisor }}
+• Fecha de intervención: {{ intervention_date }}
+• Estado: {{ status }}
+• Aprobación: {{ is_approved }}
+
+=================================
+DESCRIPCIÓN
+=================================
+{{ description }}
+
+=================================
+HALLAZGOS
+=================================
+{{ findings }}
+
+=================================
+ACCIONES REALIZADAS
+=================================
+{{ actions_taken }}
+
+=================================
+RECOMENDACIONES
+=================================
+{{ recommendations }}
+
+=================================
+ADJUNTOS
+=================================
+{{ images }}
+
+=================================
+Este es un mensaje automático - No responder directamente

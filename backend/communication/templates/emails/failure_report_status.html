@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Actualización de Estado - Reporte #{{ report_id }}</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+        <h2 style="color: #2E86C1;">🔄 Actualización de Estado - Reporte #{{ report_id }}</h2>
+        
+        <p>Hola {{ user_name }},</p>
+        
+        <p>El estado de tu reporte de fallo ha sido actualizado:</p>
+        
+        <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0;">
+            <p><strong>ID del Reporte:</strong> {{ report_id }}</p>
+            <p><strong>Tipo de Fallo:</strong> {{ failure_type }}</p>
+            <p><strong>Nuevo Estado:</strong> {{ status }}</p>
+            <p><strong>Predio:</strong> {{ plot_name }}</p>
+            <p><strong>Lote:</strong> {{ lot_name }}</p>
+            <p><strong>Fecha de Finalización:</strong> {{ finalized_at }}</p>
+            <p><strong>Observaciones:</strong> {{ observations }}</p>
+        </div>
+        
+        {% if status == 'Finalizado' %}
+        <p>Este reporte ha sido marcado como completado. Si tienes alguna pregunta o necesitas más información, no dudes en contactarnos.</p>
+        {% else %}
+        <p>Nuestro equipo está trabajando en resolver este fallo. Te notificaremos cuando haya más actualizaciones.</p>
+        {% endif %}
+        
+        <p style="margin-top: 30px; font-size: 0.9em; color: #777;">
+            Este es un mensaje automático, por favor no respondas directamente a este correo.
+        </p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,11 @@
+Nueva Solicitud de Caudal Creada
+
+ID: {{ request_id }}
+Tipo: {{ request_type }}
+Caudal solicitado: {{ requested_flow }}
+Lote: {{ lot_name }}
+Fecha de creación: {{ created_at }}
+Observaciones: {{ observations }}
+Estado: {{ status }}
+
+Usuario: {{ user_name }}

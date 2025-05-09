@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Informe de Mantenimiento</title>
+</head>
+<body>
+    <h1>Informe de Mantenimiento #{{ report_id }}</h1>
+    <p>Asignación relacionada: #{{ assignment_id }}</p>
+    <h2>Detalles técnicos</h2>
+    <ul>
+        <li><strong>Técnico:</strong> {{ technician }}</li>
+        <li><strong>Supervisor:</strong> {{ supervisor }}</li>
+        <li><strong>Fecha de intervención:</strong> {{ intervention_date }}</li>
+        <li><strong>Estado:</strong> {{ status }}</li>
+        <li><strong>Aprobación:</strong> {{ is_approved }}</li>
+    </ul>
+    <h2>Detalles de la intervención</h2>
+    <p>{{ description }}</p>
+    <h3>Hallazgos</h3>
+    <p>{{ findings }}</p>
+    <h3>Acciones realizadas</h3>
+    <p>{{ actions_taken }}</p>
+    <h3>Recomendaciones</h3>
+    <p>{{ recommendations }}</p>
+    <p>Imágenes adjuntas: {{ images }}</p>
+</body>
+</html>

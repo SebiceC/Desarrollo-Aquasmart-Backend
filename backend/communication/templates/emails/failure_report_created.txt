@@ -1,0 +1,11 @@
+Nuevo reporte de fallo creado
+
+ID: {{ report_id }}
+Tipo: {{ failure_type }}
+Predio: {{ plot_name }}
+Lote: {{ lot_name }}
+Fecha: {{ created_at }}
+Observaciones: {{ observations }}
+Estado: {{ status }}
+
+Usuario: {{ user_name }}

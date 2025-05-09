@@ -1,0 +1,11 @@
+Decisión sobre Solicitud de Caudal
+
+ID: {{ request_id }}
+Tipo: {{ request_type }}
+Estado: {{ status_text }}
+Caudal solicitado: {{ requested_flow }}
+Lote: {{ lot_name }}
+Fecha de finalización: {{ finalized_at }}
+Observaciones: {{ observations }}
+
+Usuario: {{ user_name }}
