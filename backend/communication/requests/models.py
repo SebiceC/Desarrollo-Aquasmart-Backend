@@ -24,7 +24,7 @@ class FlowRequest(BaseRequestReport):
         verbose_name_plural = "Solicitudes de caudal"
 
     def __str__(self):
-        return f"{self.flow_request_type} de {self.created_by.get_full_name()} para {self.lot} - {self.status}"
+        return f"Solicitud de {self.flow_request_type} hecha por {self.created_by.get_full_name()} para {self.lot} - {self.status}"
 
     # --- Propiedades Cacheadas ---
     @cached_property
@@ -124,7 +124,7 @@ class FlowRequest(BaseRequestReport):
                 flow_cancel_request.observations = 'Finalizado de forma automática: El usuario ha solicitado una cancelación definitiva.'
                 flow_cancel_request.save()
 
-    def _apply_cancel_flow_to_device(self): # PENDIENTE
+    def apply_cancel_flow_to_device(self): # PENDIENTE
         ''' Aplica la cancelación de caudal al dispositivo (válvula) asociado, y al lote (si es definitiva) '''
         device = self._get_device
         # Si es cancelación temporal
@@ -165,6 +165,6 @@ class FlowRequest(BaseRequestReport):
 
         self._apply_requested_flow_to_device()
         self._auto_reject_temporary_cancel_request()
-        self._apply_cancel_flow_to_device()
+        self.apply_cancel_flow_to_device()
 
         super().save(*args, **kwargs)

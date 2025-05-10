@@ -1,12 +1,12 @@
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 from communication.requests.models import FlowRequest
 from communication.reports.models import FailureReport
-from communication.utils import generate_unique_id
+from communication.utils import generate_unique_id, change_status_request_report
 
 class Assignment(models.Model):
     """Modelo para almacenar asignaciones de solicitudes y reportes de fallos"""
-    # Implementar la lógica del ID
     id = models.IntegerField(primary_key=True, verbose_name="ID", help_text="Identificador único de la asignación")
     flow_request = models.ForeignKey(FlowRequest, null=True, blank=True, on_delete=models.CASCADE, verbose_name="Solicitud de caudal", help_text="Solicitud de caudal asociada a la asignación")
     failure_report = models.ForeignKey(FailureReport, null=True, blank=True, on_delete=models.CASCADE, verbose_name="Reporte de fallo", help_text="Reporte de fallo asociado a la asignación")
@@ -17,21 +17,26 @@ class Assignment(models.Model):
 
     class Meta:
         verbose_name = "Asignación de solicitud/reporte"
-        verbose_name_plural = "Asignaciones de solicitudes/reportes"         
-     
+        verbose_name_plural = "Asignaciones de solicitudes/reportes"
+
+    def __str__(self):
+        if self.flow_request:
+            return f"Asignación de {self.assigned_by} a {self.assigned_to} ({self.assignment_date} - {self.flow_request.status})"
+        if self.failure_report:
+            return f"Asignación de {self.assigned_by} a {self.assigned_to} ({self.assignment_date} - {self.failure_report.status})"
+
     def save(self, *args, **kwargs):
+        if not self.pk:
+            change_status_request_report(self, Assignment)
         
         if not self.id:
             self.id = generate_unique_id(Assignment,"30")
+
         super().save(*args, **kwargs)
 
-    def __str__(self):
-        return f"Asignación de {self.assigned_by} a {self.assigned_to} ({self.assignment_date})"
-    
 
 class MaintenanceReport(models.Model):
     """Modelo para almacenar informes de mantenimiento"""
-    # Implementar la lógica del ID
     id = models.IntegerField(primary_key=True, verbose_name="ID", help_text="Identificador único del informe de mantenimiento")
     assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE, verbose_name="Asignación", help_text="Asignación asociada al informe de mantenimiento")
     intervention_date = models.DateTimeField(verbose_name="Fecha de intervención", help_text="Fecha y hora en que se realizó la intervención")
@@ -48,7 +53,6 @@ class MaintenanceReport(models.Model):
     def __str__(self):
         return f"Informe de mantenimiento de {self.assignment.assigned_to} ({self.intervention_date})"
 
-
     def _finalize_requests_reports(self):
         ''' Finalizar la solicitud o el reporte ligado al informe después de aprobado '''
         if self.is_approved == True:
@@ -56,12 +60,15 @@ class MaintenanceReport(models.Model):
             failure_report = self.assignment.failure_report
             if flow_request:
                 flow_request.is_approved = True
-                flow_request.save()
+                flow_request.save(update_fields=['is_approved', 'status', 'finalized_at'])
             elif failure_report:
                 failure_report.status = 'Finalizado'
-                failure_report.save()
+                failure_report.finalized_at = timezone.now()
+                failure_report.save(update_fields=['status', 'finalized_at'])
 
     def save(self, *args, **kwargs):
+        if not self.pk:
+            change_status_request_report(self, MaintenanceReport)
         if not self.id:
             self.id = generate_unique_id(MaintenanceReport,"40")
 

@@ -6,10 +6,10 @@ from iot.models import IoTDevice, VALVE_4_ID
 
 
 class StatusRequestReport(models.TextChoices):
-    PENDING = 'Pendiente', 'Pendiente'
-    IN_PROGRESS = 'En proceso', 'En proceso'
-    REJECTED = 'A espera de aprobación', 'A espera de aprobación'
-    FINISHED = 'Finalizado', 'Finalizado'
+    PENDING = 'Pendiente', 'Pendiente' # Cuando se crea la solicitud/reporte
+    IN_PROGRESS = 'En proceso', 'En proceso' # Cuando se creó la asignación para la solicitud/reporte
+    REJECTED = 'A espera de aprobación', 'A espera de aprobación' # Cuando se creó el informe de la asignación para la solicitud/reporte
+    FINISHED = 'Finalizado', 'Finalizado' # Cuando el informe ha sido aprobado
 
 class BaseRequestReport(models.Model):
     ''' Modelo base para solicitudes de caudal y reportes de fallos '''
@@ -30,7 +30,7 @@ class BaseRequestReport(models.Model):
     def _validate_lot_is_activate(self):
         ''' Valida que el lote en cuya solicitud está presente, esté habilitado '''
         if self.lot and self.lot.is_activate != True:
-            raise ValueError("No se puede realizar solicitud de caudal de un lote inhabilitado.")
+            raise ValueError("No se puede realizar una solicitud o un reporte de un lote inhabilitado.")
 
     def _validate_lot_has_valve4(self):
         ''' Validar que el lote tenga asignada una válvula de 4" '''
@@ -80,6 +80,9 @@ class BaseRequestReport(models.Model):
         if not self.pk:
             self.status = 'Pendiente'
             self.finalized_at = None
+
+        if self.status == StatusRequestReport.FINISHED:
+            self.finalized_at = timezone.now()
 
         super().save(*args, **kwargs)
 
