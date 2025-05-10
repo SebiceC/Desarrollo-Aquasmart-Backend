@@ -97,10 +97,9 @@ class MaintenanceReportListView(ListAPIView):
     def get_queryset(self):
         user = self.request.user
         if user.is_staff or user.groups.filter(name__in=["Técnicos", "Operadores"]).exists():
-
-        if user.groups.filter(name="Manager").exists():
-            return MaintenanceReport.objects.all()
-        return MaintenanceReport.objects.filter(assignment__assigned_to=user)
+            if user.groups.filter(name="Manager").exists():
+                return MaintenanceReport.objects.all()
+            return MaintenanceReport.objects.filter(assignment__assigned_to=user)
 
 
 class MaintenanceReportDetailView(RetrieveAPIView):
