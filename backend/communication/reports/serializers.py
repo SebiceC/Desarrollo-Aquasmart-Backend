@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import FailureReport
+from .models import TypeReport, FailureReport
 
 class FailureReportSerializer(serializers.ModelSerializer):
     class Meta:
@@ -25,7 +25,7 @@ class FailureReportSerializer(serializers.ModelSerializer):
         plot = data.get('plot')
         failure_type = data.get('failure_type')
 
-        if failure_type == 'Reporte de Fallo en el Suministro del Agua':
+        if failure_type == TypeReport.WATER_SUPPLY_FAILURE:
          if not lot and not plot:
              raise serializers.ValidationError("Debe proporcionar al menos un lote o un predio para este tipo de reporte.")
 

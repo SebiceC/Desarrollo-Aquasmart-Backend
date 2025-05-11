@@ -1,22 +1,24 @@
 from django.db import models
 from communication.models import BaseRequestReport
-from iot.models import IoTDevice, VALVE_4_ID
 from plots_lots.models import Plot
 from communication.utils import generate_unique_id
 
 class TypeReport(models.TextChoices):
-    WATER_SUPPLY_FAILURE = 'Reporte de Fallo en el Suministro del Agua', 'Reporte de Fallo en el Suministro del Agua'
-    APPLICATION_FAILURE = 'Reporte de Fallo en el Aplicativo', 'Reporte de Fallo en el Aplicativo'
+    WATER_SUPPLY_FAILURE = 'Fallo en el Suministro del Agua', 'Fallo en el Suministro del Agua'
+    APPLICATION_FAILURE = 'Fallo en el Aplicativo', 'Fallo en el Aplicativo'
 
 class FailureReport(BaseRequestReport):
     """Modelo para almacenar reportes de fallos"""
     id = models.IntegerField(primary_key=True, verbose_name="ID", help_text="Identificador único del reporte de fallo")
     plot = models.ForeignKey(Plot, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Predio", help_text="Predio al que se le realiza el reporte")
-    failure_type = models.CharField(max_length=50, choices=TypeReport.choices, default=TypeReport.WATER_SUPPLY_FAILURE, verbose_name="Tipo de reporte", help_text="Tipo de reporte (suministro de agua o aplicativo)")
+    failure_type = models.CharField(max_length=50, choices=TypeReport.choices, verbose_name="Tipo de reporte", help_text="Tipo de reporte (suministro de agua o aplicativo)")
 
     class Meta:
         verbose_name = "Reporte de Fallo"
         verbose_name_plural = "Reportes de Fallo"
+
+    def __str__(self):
+        return f"Reporte de {self.failure_type} hecha por {self.created_by.get_full_name()} dirigido al {self.plot} - {self.status}"
 
     def _validate_plot_is_activate(self):
         ''' Valida que el predio en cuya solicitud está presente, esté habilitado '''

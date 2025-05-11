@@ -14,6 +14,7 @@ from communication.reports.serializers import FailureReportSerializer
 from .models import MaintenanceReport, Assignment
 from .serializers import MaintenanceReportSerializer, AssignmentSerializer
 
+
 User = get_user_model()
 
 class IsAdminOrTechnicianOrOperator(BasePermission):
@@ -30,9 +31,7 @@ class IsAdminOrTechnicianOrOperator(BasePermission):
         )
     
 class AssignmentViewSet(viewsets.ModelViewSet):
-    """
-    Permite crear y listar asignaciones por parte de administradores o técnicos.
-    """
+   
     queryset = Assignment.objects.all()
     serializer_class = AssignmentSerializer
     permission_classes = [IsAuthenticated]
@@ -100,6 +99,7 @@ class MaintenanceReportListView(ListAPIView):
     """
     Lista todos los informes de mantenimiento.
     Técnicos, operadores y admins ven todos. Otros ven solo los suyos.
+    Lista todos los informes de mantenimiento. Técnicos ven los propios, managers ven todos.
     """
     serializer_class = MaintenanceReportSerializer
     permission_classes = [IsAuthenticated]
@@ -107,8 +107,9 @@ class MaintenanceReportListView(ListAPIView):
     def get_queryset(self):
         user = self.request.user
         if user.is_staff or user.groups.filter(name__in=["Técnicos", "Operadores"]).exists():
-            return MaintenanceReport.objects.all()
-        return MaintenanceReport.objects.filter(assignment__assigned_to=user)
+            if user.groups.filter(name="Manager").exists():
+                return MaintenanceReport.objects.all()
+            return MaintenanceReport.objects.filter(assignment__assigned_to=user)
 
 
 class MaintenanceReportDetailView(RetrieveAPIView):
@@ -126,6 +127,9 @@ class ApproveMaintenanceReportView(APIView):
     """
     permission_classes = [IsAuthenticated, IsAdminOrTechnicianOrOperator]
 
+class ApproveMaintenanceReportView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request, pk):
         try:
             report = MaintenanceReport.objects.get(pk=pk)
@@ -135,16 +139,21 @@ class ApproveMaintenanceReportView(APIView):
         if report.is_approved:
             return Response({"detail": "El informe ya fue aprobado."}, status=status.HTTP_400_BAD_REQUEST)
 
+
+
         report.is_approved = True
         report.save()
         return Response({"detail": "Informe aprobado correctamente."})
 
 
 class ReassignAssignmentView(APIView):
+
     """
     Permite reasignar una solicitud o reporte.
     """
     permission_classes = [IsAuthenticated, IsAdminOrTechnicianOrOperator]
+    permission_classes = [IsAuthenticated]
+
 
     def post(self, request, pk):
         try:
