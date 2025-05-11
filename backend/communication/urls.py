@@ -8,7 +8,7 @@ from communication.requests.views import (
     FlowRequestDetailView, FlowRequestApproveView, FlowRequestRejectView
 )
 from communication.reports.views import (
-    WaterSupplyFailureReportViewSet, AppFailureReportViewSet
+    WaterSupplyFailureReportViewSet, AppFailureReportViewSet,UserRequestsAndReportsStatusView
 )
 from communication.assigment_maintenance.views import (
     AssignmentViewSet,
@@ -88,5 +88,9 @@ urlpatterns = [
 
     path('maintenance-reports/<int:pk>/approve', ApproveMaintenanceReportView.as_view(), name='maintenance-report-approve'),
     path('assignments/<int:pk>/reassign', ReassignAssignmentView.as_view(), name='assignment-reassign'),
+
+    #Solicitudes del usuario
+    path('my/requests-and-reports', UserRequestsAndReportsStatusView.as_view(), name='user-requests-reports'),
+
 
 ]
