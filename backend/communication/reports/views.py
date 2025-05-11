@@ -3,6 +3,51 @@ from rest_framework.generics import RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 from communication.reports.models import FailureReport, TypeReport
 from communication.reports.serializers import FailureReportSerializer
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from communication.requests.models import FlowRequest
+from communication.reports.models import FailureReport
+from communication.requests.serializers import FlowRequestSerializer
+from communication.reports.serializers import FailureReportSerializer
+
+class UserRequestsAndReportsStatusView(APIView):
+    """
+    Muestra al usuario final sus solicitudes y reportes, con sus respectivos estados.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        # Filtrar solicitudes y reportes creados por el usuario
+        flow_requests = FlowRequest.objects.filter(created_by=user)
+        failure_reports = FailureReport.objects.filter(created_by=user)
+
+        flow_data = [
+            {
+                "id": fr.id,
+                "tipo": fr.flow_request_type,
+                "estado": fr.status,
+                "fecha": fr.created_at,
+            }
+            for fr in flow_requests
+        ]
+
+        report_data = [
+            {
+                "id": rep.id,
+                "tipo_falla": rep.failure_type,
+                "estado": rep.status if hasattr(rep, 'status') else 'Registrado',
+                "fecha": rep.created_at,
+            }
+            for rep in failure_reports
+        ]
+
+        return Response({
+            "mis_solicitudes": flow_data,
+            "mis_reportes": report_data
+        })
 
 class WaterSupplyFailureReportViewSet(viewsets.ModelViewSet):
     """
