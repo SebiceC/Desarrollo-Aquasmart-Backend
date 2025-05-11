@@ -13,6 +13,8 @@ from communication.reports.serializers import FailureReportSerializer
 
 from .models import MaintenanceReport, Assignment
 from .serializers import MaintenanceReportSerializer, AssignmentSerializer
+from .permissions import IsAdminOrTechnicianOrOperator  # <-- Asegúrate de importar bien
+
 
 
 User = get_user_model()
@@ -110,6 +112,11 @@ class MaintenanceReportListView(ListAPIView):
             if user.groups.filter(name="Manager").exists():
                 return MaintenanceReport.objects.all()
             return MaintenanceReport.objects.filter(assignment__assigned_to=user)
+
+
+        if user.groups.filter(name="Manager").exists():
+            return MaintenanceReport.objects.all()
+        return MaintenanceReport.objects.filter(assignment__assigned_to=user)
 
 
 class MaintenanceReportDetailView(RetrieveAPIView):
