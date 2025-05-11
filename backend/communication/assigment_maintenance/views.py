@@ -13,8 +13,6 @@ from communication.reports.serializers import FailureReportSerializer
 
 from .models import MaintenanceReport, Assignment
 from .serializers import MaintenanceReportSerializer, AssignmentSerializer
-from .permissions import IsAdminOrTechnicianOrOperator  # <-- Asegúrate de importar bien
-
 
 
 User = get_user_model()
