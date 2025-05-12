@@ -18,6 +18,22 @@ from .serializers import MaintenanceReportSerializer, AssignmentSerializer
 User = get_user_model()
 
 
+class AdminRequestOrReportUnifiedDetailView(APIView):
+    """
+    Devuelve el detalle de una solicitud o reporte según el ID, sin importar el usuario.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        flow = FlowRequest.objects.filter(pk=pk).first()
+        if flow:
+            return Response(FlowRequestSerializer(flow).data)
+
+        report = FailureReport.objects.filter(pk=pk).first()
+        if report:
+            return Response(FailureReportSerializer(report).data)
+
+        return Response({"detail": "No se encontró una solicitud o reporte con ese ID."}, status=404)
 
 
 class AllRequestsAndReportsView(APIView):
