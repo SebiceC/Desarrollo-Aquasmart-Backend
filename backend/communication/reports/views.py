@@ -11,6 +11,30 @@ from communication.reports.models import FailureReport
 from communication.requests.serializers import FlowRequestSerializer
 from communication.reports.serializers import FailureReportSerializer
 
+
+
+class UserRequestOrReportUnifiedDetailView(APIView):
+    """
+    Devuelve el detalle de una solicitud o reporte según el ID, sin necesidad de especificar el tipo.
+    Solo devuelve datos del usuario autenticado.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        user = request.user
+
+        # Buscar primero en FlowRequest
+        flow = FlowRequest.objects.filter(pk=pk, created_by=user).first()
+        if flow:
+            return Response(FlowRequestSerializer(flow).data)
+
+        # Luego buscar en FailureReport
+        report = FailureReport.objects.filter(pk=pk, created_by=user).first()
+        if report:
+            return Response(FailureReportSerializer(report).data)
+
+        return Response({"detail": "No se encontró una solicitud o reporte con ese ID perteneciente al usuario."}, status=404)
+
 class UserRequestsAndReportsStatusView(APIView):
     """
     Muestra al usuario final sus solicitudes y reportes, con sus respectivos estados.
