@@ -5,6 +5,8 @@ from rest_framework.generics import (
     RetrieveAPIView, CreateAPIView, ListAPIView
 )
 from rest_framework.permissions import IsAuthenticated, BasePermission, IsAdminUser
+=======
+from rest_framework.permissions import IsAuthenticated, BasePermission
 from django.contrib.auth import get_user_model
 from communication.requests.models import FlowRequest
 from communication.requests.serializers import FlowRequestSerializer
@@ -54,6 +56,7 @@ class AllRequestsAndReportsView(APIView):
             "failure_reports": report_data
         })
     
+
 
 class IsAdminOrTechnicianOrOperator(BasePermission):
     """
