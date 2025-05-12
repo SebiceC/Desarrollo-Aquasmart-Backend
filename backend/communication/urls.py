@@ -20,7 +20,8 @@ from communication.assigment_maintenance.views import (
     MaintenanceReportListView,
     MaintenanceReportDetailView,
     ApproveMaintenanceReportView,
-    ReassignAssignmentView
+    ReassignAssignmentView,
+    AllRequestsAndReportsView
 
 
 )
@@ -74,6 +75,7 @@ urlpatterns = [
     path('reports/app-failure/list', app_report_list, name='app-failure-list'),
 
     # Assignment Endpoints
+    path('admin/requests-and-reports', AllRequestsAndReportsView.as_view(), name='all-requests-reports'), #Todas las solicitudes y reportes
     path('assignments/create', assignment_create, name='assignment-create'),
     path('assignments/list', assignment_list, name='assignment-list'),
      path('assignments/flow-request/<int:pk>', FlowRequestAssignmentDetailView.as_view(), name='assignment-flow-request-detail'),

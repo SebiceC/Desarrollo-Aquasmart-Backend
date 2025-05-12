@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.generics import (
     RetrieveAPIView, CreateAPIView, ListAPIView
 )
-from rest_framework.permissions import IsAuthenticated, BasePermission
+from rest_framework.permissions import IsAuthenticated, BasePermission, IsAdminUser
 from django.contrib.auth import get_user_model
 from communication.requests.models import FlowRequest
 from communication.requests.serializers import FlowRequestSerializer
@@ -16,6 +16,28 @@ from .serializers import MaintenanceReportSerializer, AssignmentSerializer
 
 
 User = get_user_model()
+
+
+
+
+class AllRequestsAndReportsView(APIView):
+    """
+    Devuelve todas las solicitudes y reportes de todos los usuarios (uso administrativo).
+    """
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        flow_requests = FlowRequest.objects.all()
+        failure_reports = FailureReport.objects.all()
+
+        flow_data = FlowRequestSerializer(flow_requests, many=True).data
+        report_data = FailureReportSerializer(failure_reports, many=True).data
+
+        return Response({
+            "flow_requests": flow_data,
+            "failure_reports": report_data
+        })
+    
 
 class IsAdminOrTechnicianOrOperator(BasePermission):
     """
