@@ -105,6 +105,13 @@ class FlowRequest(BaseRequestReport):
         if device.actual_flow > 0:
             raise ValueError("El caudal del lote ya está activo. No es necesario solicitar activación.")
 
+    def _validate_approved_transition(self):
+        ''' Valida que no se cambie el estado de la solicitud una vez fue finalizada '''
+        if self.pk:
+            old = type(self).objects.get(pk=self.pk)
+            if old.is_approved == True and self.is_approved != old.is_approved:
+                raise ValueError("Si la solicitud ya fue aprobada, no se puede revertir dicha acción.")
+
     def _apply_requested_flow_to_device(self): # PENDIENTE
         ''' Aplica el caudal solicitado al dispositivo (válvula) asociado '''
         if self.flow_request_type in {FlowRequestType.FLOW_CHANGE, FlowRequestType.FLOW_TEMPORARY_CANCEL, FlowRequestType.FLOW_ACTIVATION}:
@@ -145,6 +152,7 @@ class FlowRequest(BaseRequestReport):
     def clean(self):
         super().clean()
         self._validate_owner()
+        self._validate_approved_transition()
         self._validate_requested_flow()
         self._check_caudal_flow_inactive()
         self._validate_pending_change_request()
