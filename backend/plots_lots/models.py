@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from users.models import CustomUser
 import hashlib
 import uuid
@@ -36,9 +37,21 @@ class Plot(models.Model):
             
             # Generar el código
             self.id_plot = f"PR-{hash_str}"
-            print (self.id_plot)
-        # Generar el código de la receta
-        super().save(*args, **kwargs)    
+
+        # Si el predio se está desactivando
+        if not self.is_activate:
+            # Desactivar todos los lotes asociados
+            Lot.objects.filter(plot=self).update(is_activate=False)
+        
+        if self.pk:
+            # Si el predio se está activando
+            old = type(self).objects.get(pk=self.pk)
+            if old.is_activate == False and self.is_activate == True:
+                # Desactivar todos los lotes asociados
+                Lot.objects.filter(plot=self).update(is_activate=True)
+
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.plot_name} (ID: {self.id_plot})"
     
@@ -79,6 +92,12 @@ class Lot(models.Model):
     def __str__(self):
         return f"Lote {self.id_lot} en {self.plot.plot_name} - {self.crop_type}"
     
+    def _validate_is_activate_plot(self):
+        ''' Valida que no se pueda activar un lote si su predio está desactivado '''
+        if self.plot.is_activate == False:
+            if self.is_activate == True:
+                raise ValueError("No se puede habilitar el lote si el predio al cual pertenece está deshabilitado.")
+    
     def save(self, *args, **kwargs):
         # Generar el id_lot solo si no existe aún
         if not self.id_lot:
@@ -99,8 +118,11 @@ class Lot(models.Model):
             
             # Crear el id_lot combinando id_plot sin prefijo y el número secuencial
             self.id_lot = f"{id_plot_sin_prefijo}-{numero_formateado}"  # Resultado: "1234567-001"
-        
+
+        if not self.registration_date:
+            self.registration_date = timezone.now()
+
+        self._validate_is_activate_plot()
+
         # Guardar el objeto
-        super().save(*args, **kwargs)     
-    
-    
+        super().save(*args, **kwargs)
