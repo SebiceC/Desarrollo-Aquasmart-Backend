@@ -26,7 +26,8 @@ class AssignmentSerializer(serializers.ModelSerializer):
         ''' Valida que no se permita crear una asignación de una solicitud que no debe ser delegada '''
         if value.requires_delegation == False:
             raise serializers.ValidationError({"error": "No se puede crear una asignación de esta solicitud."})
-        
+        return value
+
     def _validate_exclusive_assignment(self, data):
         flow_request = data.get('flow_request')
         failure_report = data.get('failure_report')
