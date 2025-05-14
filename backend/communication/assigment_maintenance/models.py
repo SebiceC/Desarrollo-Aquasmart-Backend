@@ -1,7 +1,8 @@
 from django.db import models
+from django.db import transaction
 from django.conf import settings
 from django.utils import timezone
-from communication.requests.models import FlowRequest, FlowRequestType
+from communication.requests.models import FlowRequest
 from communication.reports.models import FailureReport
 from communication.utils import generate_unique_id, change_status_request_report
 
@@ -27,7 +28,7 @@ class Assignment(models.Model):
 
     def _validate_requires_delegation(self):
         ''' Valida que no se permita crear una asignación de una solicitud que no debe ser delegada '''
-        if self.flow_request_type.requires_delegation == False:
+        if self.flow_request.requires_delegation == False:
             raise ValueError({"error": "No se puede crear una asignación de esta solicitud."})
 
     def save(self, *args, **kwargs):
@@ -68,16 +69,16 @@ class MaintenanceReport(models.Model):
 
     def _finalize_requests_reports(self):
         ''' Finalizar la solicitud o el reporte ligado al informe después de aprobado '''
-        if self.is_approved == True:
-            flow_request = self.assignment.flow_request
-            failure_report = self.assignment.failure_report
-            if flow_request:
-                flow_request.is_approved = True
-                flow_request.save(update_fields=['is_approved', 'status', 'finalized_at'])
-            elif failure_report:
-                failure_report.status = 'Finalizado'
-                failure_report.finalized_at = timezone.now()
-                failure_report.save(update_fields=['status', 'finalized_at'])
+        with transaction.atomic():
+            if self.is_approved == True:
+                flow_request = self.assignment.flow_request
+                failure_report = self.assignment.failure_report
+                if flow_request:
+                    flow_request.approve_from_maintenance()
+                elif failure_report:
+                    failure_report.status = 'Finalizado'
+                    failure_report.finalized_at = timezone.now()
+                    failure_report.save(update_fields=['status', 'finalized_at'])
 
     def save(self, *args, **kwargs):
         if not self.pk:

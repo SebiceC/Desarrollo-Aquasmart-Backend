@@ -17,23 +17,24 @@ def generate_unique_id(model,prefix):
 
 def change_status_request_report(self, model):
     ''' Cambia el estado de la solicitud o reporte '''
+
     if model.__name__ == "Assignment":
         flow_request = self.flow_request
         failure_report = self.failure_report
         if flow_request:
-            flow_request.status = StatusRequestReport.IN_PROGRESS
-            flow_request.save(update_fields=['status'])
+            model_flow_request = type(flow_request).objects.filter(pk=flow_request.pk)
+            model_flow_request.update(status=StatusRequestReport.IN_PROGRESS)
         elif failure_report:
-            failure_report.status = StatusRequestReport.IN_PROGRESS
-            failure_report.save(update_fields=['status'])
+            model_failure_report = type(failure_report).objects.filter(pk=failure_report.pk)
+            model_failure_report.update(status=StatusRequestReport.IN_PROGRESS)
 
     if model.__name__ == "MaintenanceReport":
         flow_request = self.assignment.flow_request
         failure_report = self.assignment.failure_report
 
         if flow_request:
-            flow_request.status = StatusRequestReport.REJECTED
-            flow_request.save(update_fields=['status'])
+            model_flow_request = type(flow_request).objects.filter(pk=flow_request.pk)
+            model_flow_request.update(status=StatusRequestReport.REJECTED)
         elif failure_report:
-            failure_report.status = StatusRequestReport.REJECTED
-            failure_report.save(update_fields=['status'])
+            model_failure_report = type(failure_report).objects.filter(pk=failure_report.pk)
+            model_failure_report.update(status=StatusRequestReport.REJECTED)

@@ -1,6 +1,8 @@
 from django.db import models
+from django.db import transaction
+from django.utils import timezone
 from functools import cached_property
-from communication.models import BaseRequestReport
+from communication.models import BaseRequestReport, StatusRequestReport
 from iot.models import IoTDevice, VALVE_4_ID
 from communication.utils import generate_unique_id
 
@@ -128,6 +130,22 @@ class FlowRequest(BaseRequestReport):
                     raise ValueError("Si la solicitud ya fue aprobada, no se puede revertir dicha acción.")
             except type(self).DoesNotExist:
                 pass
+
+    def approve_from_maintenance(self):
+        """Método específico para aprobar la solicitud desde un reporte de mantenimiento"""
+        with transaction.atomic():
+            self.is_approved = True
+            self.status = StatusRequestReport.FINISHED
+            self.finalized_at = timezone.now()
+            
+            self._apply_cancel_flow_to_device()
+            
+            # Guardar sin ejecutar validaciones
+            type(self).objects.filter(pk=self.pk).update(
+                is_approved=self.is_approved,
+                status=self.status,
+                finalized_at=self.finalized_at
+            )
 
     def _apply_requested_flow_to_device(self): # PENDIENTE
         ''' Aplica el caudal solicitado al dispositivo (válvula) asociado '''
