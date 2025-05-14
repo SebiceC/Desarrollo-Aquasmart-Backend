@@ -43,9 +43,12 @@ class BaseRequestReport(models.Model):
     def _validate_status_transition(self):
         ''' Valida que no se cambie el estado de la solicitud una vez fue finalizada '''
         if self.pk:
-            old = type(self).objects.get(pk=self.pk)
-            if old.status == StatusRequestReport.FINISHED and self.status != old.status:
-                raise ValueError("No se puede cambiar el estado una vez que la solicitud ha sido revisada.")
+            try:
+                old = type(self).objects.get(pk=self.pk)
+                if old.status == StatusRequestReport.FINISHED and self.status != old.status:
+                    raise ValueError("No se puede cambiar el estado una vez que la solicitud ha sido revisada.")
+            except type(self).DoesNotExist:
+                pass
 
     def clean(self):
         self._validate_lot_is_activate()
