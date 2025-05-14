@@ -159,11 +159,11 @@ class FlowRequestSerializer(serializers.ModelSerializer):
             if not observations:
                 raise serializers.ValidationError("El campo 'observations' es obligatorio.")
             if flow_request_type in {FlowRequestType.FLOW_TEMPORARY_CANCEL, FlowRequestType.FLOW_DEFINITIVE_CANCEL}:
-                if len(observations) > 200:
-                    raise serializers.ValidationError("Las observaciones no pueden exceder los 200 caracteres.")
+                if len(observations) < 5 and len(observations) > 200:
+                    raise serializers.ValidationError("Las observaciones deben estar entre los 5 y 200 caracteres.")
             elif flow_request_type == FlowRequestType.FLOW_ACTIVATION:
                 if len(observations) > 300:
-                    raise serializers.ValidationError("Las observaciones no pueden exceder los 300 caracteres.")
+                    raise serializers.ValidationError("Las observaciones no pueden xceder los 300 caracteres.")
 
     def validate_requires_delegation(self, value):
         if self.flow_request_type != FlowRequestType.FLOW_DEFINITIVE_CANCEL:
