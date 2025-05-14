@@ -96,21 +96,38 @@ class FlowRequest(BaseRequestReport):
 
     def _validate_pending_activation_request(self):
         ''' Valida que no existan solicitudes pendientes de activación para el mismo lote. '''
-        if FlowRequest.objects.filter(lot=self.lot, status='Pendiente').exclude(pk=self.pk).exists():
-            raise ValueError("El lote elegido cuenta con una solicitud de activación de caudal en curso.")
+        if self.flow_request_type == FlowRequestType.FLOW_ACTIVATION:
+            if FlowRequest.objects.filter(lot=self.lot, status='Pendiente').exclude(pk=self.pk).exists():
+                raise ValueError("El lote elegido cuenta con una solicitud de activación de caudal en curso.")
 
     def _validate_actual_flow_activated(self):
         ''' Valida que el caudal actual del lote esté activo '''
-        device = self._get_device
-        if device.actual_flow > 0:
-            raise ValueError("El caudal del lote ya está activo. No es necesario solicitar activación.")
+        if self.flow_request_type == FlowRequestType.FLOW_ACTIVATION:
+            device = self._get_device
+            if device.actual_flow > 0:
+                raise ValueError("El caudal del lote ya está activo. No es necesario solicitar activación.")
+
+    def _validate_observations(self):
+        if self.flow_request_type in {FlowRequestType.FLOW_TEMPORARY_CANCEL, FlowRequestType.FLOW_DEFINITIVE_CANCEL, FlowRequestType.FLOW_ACTIVATION}:
+            if not self.observations:
+                raise ValueError("El campo 'observations' es obligatorio.")
+            
+            if self.flow_request_type in {FlowRequestType.FLOW_TEMPORARY_CANCEL, FlowRequestType.FLOW_DEFINITIVE_CANCEL}:
+                if len(self.observations) > 200:
+                    raise ValueError("Las observaciones no pueden exceder los 200 caracteres.")
+            elif self.flow_request_type == FlowRequestType.FLOW_ACTIVATION:
+                if len(self.observations) > 300:
+                    raise ValueError("Las observaciones no pueden exceder los 300 caracteres.")
 
     def _validate_approved_transition(self):
         ''' Valida que no se cambie el estado de la solicitud una vez fue finalizada '''
         if self.pk:
-            old = type(self).objects.get(pk=self.pk)
-            if old.is_approved == True and self.is_approved != old.is_approved:
-                raise ValueError("Si la solicitud ya fue aprobada, no se puede revertir dicha acción.")
+            try:
+                old = type(self).objects.get(pk=self.pk)
+                if old.is_approved == True and self.is_approved != old.is_approved:
+                    raise ValueError("Si la solicitud ya fue aprobada, no se puede revertir dicha acción.")
+            except type(self).DoesNotExist:
+                pass
 
     def _apply_requested_flow_to_device(self): # PENDIENTE
         ''' Aplica el caudal solicitado al dispositivo (válvula) asociado '''
@@ -163,6 +180,7 @@ class FlowRequest(BaseRequestReport):
         self._validate_cancellation_flow_not_editable()
         self._validate_pending_activation_request()
         self._validate_actual_flow_activated()
+        self._validate_observations()
 
     def save(self, *args, **kwargs):
         # Generar ID único para la solicitud
