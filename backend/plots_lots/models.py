@@ -44,11 +44,14 @@ class Plot(models.Model):
             Lot.objects.filter(plot=self).update(is_activate=False)
         
         if self.pk:
-            # Si el predio se está activando
-            old = type(self).objects.get(pk=self.pk)
-            if old.is_activate == False and self.is_activate == True:
-                # Desactivar todos los lotes asociados
-                Lot.objects.filter(plot=self).update(is_activate=True)
+            try:
+                # Si el predio se está activando
+                old = type(self).objects.get(pk=self.pk)
+                if old.is_activate == False and self.is_activate == True:
+                    # Desactivar todos los lotes asociados
+                    Lot.objects.filter(plot=self).update(is_activate=True)
+            except type(self).DoesNotExist:
+                pass
 
         super().save(*args, **kwargs)
 
