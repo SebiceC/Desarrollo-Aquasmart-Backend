@@ -69,7 +69,7 @@ class FailureReportSerializer(serializers.ModelSerializer):
                 plot_pending = plot_pending.exclude(pk=instance.pk)
                 lot_pending = lot_pending.exclude(pk=instance.pk)
 
-            if lot_pending.exists() or (plot_pending.exists() and lot):
+            if lot_pending.exists() or (plot_pending.exists() and lot_pending.exists()):
                 raise serializers.ValidationError(
                     "No se puede crear el reporte porque ya existe uno pendiente para el predio o el lote seleccionado."
                 )
