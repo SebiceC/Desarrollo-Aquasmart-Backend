@@ -80,7 +80,7 @@ class CustomUserCreateView(generics.CreateAPIView):
         return Response(
             {
                 "message": "Usuario Pre-registrado exitosamente.",
-                "user": CustomUserSerializer(user).data,
+                "user": CustomUserSerializer(user,fields=["document","first_name","last_name","email","drive_folder_id"]).data,
                 **({"alert": alert_message} if alert_message else {})
             },
             status=status.HTTP_201_CREATED
