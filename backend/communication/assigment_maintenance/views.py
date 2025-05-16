@@ -202,7 +202,7 @@ class ReassignAssignmentView(APIView):
 
         data = request.data.copy()
         data['reassigned'] = True
-        data['assigned_by'] = request.user.id
+        data['assigned_by'] = request.user.pk
 
         # Reasignar mismo flujo o reporte
         if old_assignment.flow_request:
@@ -212,6 +212,6 @@ class ReassignAssignmentView(APIView):
 
         serializer = AssignmentSerializer(data=data)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(assigned_by=request.user)
             return Response({"detail": "Reasignación creada correctamente."})
         return Response(serializer.errors, status=400)
