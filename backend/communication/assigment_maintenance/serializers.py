@@ -21,7 +21,15 @@ class AssignmentSerializer(serializers.ModelSerializer):
             'reassigned',
         ]
         read_only_fields = ['id', 'assigned_by', 'assignment_date']
-
+        
+    def to_representation(self, instance):
+        "Elimina los campos de flujo y reporte si son nulos al momento de mostrar la respuesta"
+        rep = super().to_representation(instance)
+        if rep.get('flow_request') is None:
+            rep.pop('flow_request')
+        if rep.get('failure_report') is None:
+            rep.pop('failure_report')
+        return rep
     def validate_flow_request(self, value):
         ''' Valida que no se permita crear una asignación de una solicitud que no debe ser delegada '''
         if value.requires_delegation == False:
@@ -37,7 +45,9 @@ class AssignmentSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Debe asignar al menos un 'flow_request' o un 'failure_report'.")
 
     def _validate_no_auto_assignment(self, data):
-        if data.get('assigned_by') == data.get('assigned_to'):
+        
+        assigned_by = self.context['request'].user
+        if assigned_by == data.get('assigned_to'):            
             raise serializers.ValidationError("Un usuario no puede asignarse a sí mismo una solicitud o reporte.")
 
     def _validate_duplicate_assignment(self, data):
@@ -69,9 +79,11 @@ class AssignmentSerializer(serializers.ModelSerializer):
         assigned_to = data.get('assigned_to')
 
         if assigned_to:
-            valid_groups = ['Técnico', 'Operador']
-            if not assigned_to.groups.filter(name__in=valid_groups).exists():
-                raise serializers.ValidationError("Solo se puede asignar a usuarios del grupo 'Técnico' o 'Operador'.")
+            required_permission = 'communication.can_be_assigned'  # Cambia esto por el permiso que tú definas
+            if not assigned_to.has_perm(required_permission):
+                raise serializers.ValidationError(
+                    {"assigned_error":f"El usuario asignado debe tener el permiso necesario para poder completar esta accion."}
+                )
         
     def validate(self, data):
         self._validate_exclusive_assignment(data)

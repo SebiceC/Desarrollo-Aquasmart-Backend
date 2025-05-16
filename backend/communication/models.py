@@ -5,6 +5,7 @@ from plots_lots.models import Lot, Plot
 from iot.models import IoTDevice, VALVE_4_ID
 
 
+
 class StatusRequestReport(models.TextChoices):
     PENDING = 'Pendiente', 'Pendiente' # Cuando se crea la solicitud/reporte
     IN_PROGRESS = 'En proceso', 'En proceso' # Cuando se creó la asignación para la solicitud/reporte
@@ -69,6 +70,4 @@ class BaseRequestReport(models.Model):
         super().save(*args, **kwargs)
 
 
-from communication.requests.models import *
-from .reports.models import *
-from .assigment_maintenance.models import *
+

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Nueva Solicitud de Caudal Creada</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+        <h2 style="color: #28A745;">✅ Nueva Solicitud de Caudal Creada</h2>
+        
+        <p>Hola {{ user_name }},</p>
+        
+        <p>Se ha creado una nueva solicitud de caudal con los siguientes detalles:</p>
+        
+        <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0;">
+            <p><strong>ID de Solicitud:</strong> {{ request_id }}</p>
+            <p><strong>Tipo de Solicitud:</strong> {{ request_type }}</p>
+            <p><strong>Caudal Solicitado:</strong> {{ requested_flow }}</p>
+            <p><strong>Lote:</strong> {{ lot_name }}</p>
+            <p><strong>Fecha de Creación:</strong> {{ created_at }}</p>
+            <p><strong>Observaciones:</strong> {{ observations }}</p>
+            <p><strong>Estado Actual:</strong> {{ status }}</p>
+        </div>
+        
+        <p>Nuestro equipo revisará tu solicitud y te notificará cuando haya una decisión.</p>
+        
+        <p style="margin-top: 30px; font-size: 0.9em; color: #777;">
+            Este es un mensaje automático, por favor no respondas directamente a este correo.
+        </p>
+    </div>
+</body>
+</html>

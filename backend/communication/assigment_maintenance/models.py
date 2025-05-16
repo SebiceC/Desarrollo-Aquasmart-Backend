@@ -5,6 +5,10 @@ from django.utils import timezone
 from communication.requests.models import FlowRequest
 from communication.reports.models import FailureReport
 from communication.utils import generate_unique_id, change_status_request_report
+from communication.notifications import (
+    send_assignment_notification,
+    send_maintenance_report_notification
+)
 
 class Assignment(models.Model):
     """Modelo para almacenar asignaciones de solicitudes y reportes de fallos"""
@@ -19,6 +23,13 @@ class Assignment(models.Model):
     class Meta:
         verbose_name = "Asignación de solicitud/reporte"
         verbose_name_plural = "Asignaciones de solicitudes/reportes"
+        permissions = [
+            ("can_be_assigned", "Puede puede ser asignado"),
+            ("can_assign_user", "Puede asignar un usuario"),
+            ('Can_view_assignment', 'Puede ver asignaciones'),
+            ('view_all_assignments', 'Puede ver todas las asignaciones'),
+            
+        ]
 
     def __str__(self):
         if self.flow_request:
@@ -28,10 +39,12 @@ class Assignment(models.Model):
 
     def _validate_requires_delegation(self):
         ''' Valida que no se permita crear una asignación de una solicitud que no debe ser delegada '''
-        if self.flow_request.requires_delegation == False:
+        if self.flow_request and self.flow_request.requires_delegation == False:
             raise ValueError({"error": "No se puede crear una asignación de esta solicitud."})
 
     def save(self, *args, **kwargs):
+        is_new = not self.pk  # Verificar si es una nueva asignación
+        
         if not self.pk:
             change_status_request_report(self, Assignment)
         
@@ -42,6 +55,10 @@ class Assignment(models.Model):
             self._validate_requires_delegation()
 
         super().save(*args, **kwargs)
+        
+        # Enviar notificación después de guardar
+        if is_new:
+            send_assignment_notification(self)
 
 
 class MaintenanceReport(models.Model):
@@ -50,8 +67,11 @@ class MaintenanceReport(models.Model):
     assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE, verbose_name="Asignación", help_text="Asignación asociada al informe de mantenimiento")
     intervention_date = models.DateTimeField(verbose_name="Fecha de intervención", help_text="Fecha y hora en que se realizó la intervención")
     images = models.TextField(null=True, blank=True, verbose_name="Imágenes", help_text="Imágenes de la intervención realizada")
-    description = models.CharField(null=True, blank=True, max_length=1000, verbose_name="Descripción", help_text="Descripción de la intervención realizada")
-    status = models.CharField(max_length=50, choices=[('Finalizado', 'Finalizado'), ('Requiere nueva intervención', 'Requiere nueva intervención')], verbose_name="Estado", help_text="Estado final del informe de mantenimiento")
+    description = models.TextField(null=True, blank=True, verbose_name="Descripción", help_text="Descripción de la intervención realizada")
+    status = models.CharField(max_length=50, choices=[
+        ('Finalizado', 'Finalizado'), 
+        ('Requiere nueva intervención', 'Requiere nueva intervención')
+    ], verbose_name="Estado", help_text="Estado final del informe de mantenimiento")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de creación", help_text="Fecha y hora en que se creó el informe de mantenimiento")
     is_approved = models.BooleanField(default=False, verbose_name="Fue aprobado", help_text="Indica si el informe de mantenimiento fue aprobado o no")
 
@@ -60,7 +80,7 @@ class MaintenanceReport(models.Model):
         verbose_name_plural = "Informes de mantenimiento"
 
     def __str__(self):
-        return f"Informe de mantenimiento de {self.assignment.assigned_to} ({self.intervention_date})"
+        return f"Informe #{self.id} por {self.assignment.assigned_to} ({self.status})"
 
     def _validate_intervention_date(self):
         ''' Valida que la fecha de intervención no sea mayor a la fecha actual '''
@@ -71,23 +91,27 @@ class MaintenanceReport(models.Model):
         ''' Finalizar la solicitud o el reporte ligado al informe después de aprobado '''
         with transaction.atomic():
             if self.is_approved == True:
-                flow_request = self.assignment.flow_request
-                failure_report = self.assignment.failure_report
-                if flow_request:
-                    flow_request.approve_from_maintenance()
-                elif failure_report:
-                    failure_report.status = 'Finalizado'
-                    failure_report.finalized_at = timezone.now()
-                    failure_report.save(update_fields=['status', 'finalized_at'])
+                if self.assignment.flow_request:
+                    self.assignment.flow_request.approve_from_maintenance()
+                elif self.assignment.failure_report:
+                    self.assignment.failure_report.status = 'Finalizado'
+                    self.assignment.failure_report.finalized_at = timezone.now()
+                    self.assignment.failure_report.save(update_fields=['status', 'finalized_at'])
 
     def save(self, *args, **kwargs):
+        is_new = not self.pk  # Verificar si es un nuevo informe
+        
         if not self.pk:
             change_status_request_report(self, MaintenanceReport)
+            
         if not self.id:
             self.id = generate_unique_id(MaintenanceReport,"40")
 
         self._validate_intervention_date()
-
-        self._finalize_requests_reports()
-
         super().save(*args, **kwargs)
+        
+        self._finalize_requests_reports()
+        
+        # Enviar notificación después de guardar
+        if is_new:
+            send_maintenance_report_notification(self)

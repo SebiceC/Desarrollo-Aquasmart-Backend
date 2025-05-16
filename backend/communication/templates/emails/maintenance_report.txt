@@ -1,0 +1,18 @@
+Informe de Mantenimiento #{{ report_id }}
+----------------------------------------
+
+INFORMACIÓN BÁSICA:
+- Tipo: {{ object_type }} #{{ object_id }}
+- Estado: {{ status }}
+- Aprobación: {{ is_approved }}
+
+FECHA Y RESPONSABLES:
+- Fecha intervención: {{ intervention_date }}
+- Técnico: {{ technician }}
+- Supervisor: {{ supervisor }}
+
+DESCRIPCIÓN:
+{{ description }}
+
+----------------------------------------
+Este es un mensaje automático.
