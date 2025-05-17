@@ -61,20 +61,25 @@ class AssignmentSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Este reporte de fallo ya ha sido asignado a este usuario.")
 
     def _validate_reassignment_logic(self, data):
-        flow_request = data.get('flow_request')
-        failure_report = data.get('failure_report')
-        reassigned = data.get('reassigned', False)
+      flow_request = data.get('flow_request')
+      failure_report = data.get('failure_report')
+      reassigned = data.get('reassigned', False)
 
-        # Asegurar que `qs` siempre esté definido
-        queryset = Assignment.objects.all()
-        qs = queryset.exclude(id=self.instance.id) if self.instance else queryset
+      queryset = Assignment.objects.all()
+      qs = queryset.exclude(id=self.instance.id) if self.instance else queryset
 
-        if flow_request and qs.filter(flow_request=flow_request).exists() and not reassigned:
-            raise serializers.ValidationError("Esta solicitud ya fue asignada previamente. Debe marcar como 'reassigned'.")
+      is_reassignment = self.context.get('is_reassignment', False)
 
-        if failure_report and qs.filter(failure_report=failure_report).exists() and not reassigned:
-            raise serializers.ValidationError("Este reporte ya fue asignado previamente. Debe marcar como 'reassigned'.")
+      if flow_request and qs.filter(flow_request=flow_request).exists() and not reassigned:
+         msg = "Esta solicitud ya fue asignada previamente. "
+         msg += "Use 'reassigned': true para marcarla como reasignación." if not is_reassignment else ""
+         raise serializers.ValidationError(msg)
 
+      if failure_report and qs.filter(failure_report=failure_report).exists() and not reassigned:
+         msg = "Este reporte ya fue asignado previamente. "
+         msg += "Use 'reassigned': true para marcarlo como reasignación." if not is_reassignment else ""
+         raise serializers.ValidationError(msg)
+      
     def _validate_assigned_user_role(self, data):
         assigned_to = data.get('assigned_to')
 

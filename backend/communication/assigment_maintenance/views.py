@@ -204,31 +204,39 @@ class ApproveMaintenanceReportView(APIView):
 
 
 class ReassignAssignmentView(APIView):
-
     """
-    Permite reasignar una solicitud o reporte.
+    Permite reasignar una solicitud o reporte a otro técnico u operador.
     """
-    permission_classes = [IsAuthenticated,  IsAdminUser]
-
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request, pk):
         try:
             old_assignment = Assignment.objects.get(pk=pk)
         except Assignment.DoesNotExist:
-            return Response({"detail": "Asignación no encontrada"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"detail": "Asignación no encontrada."}, status=404)
 
         data = request.data.copy()
         data['reassigned'] = True
-        data['assigned_by'] = request.user.pk
 
-        # Reasignar mismo flujo o reporte
+        # Copiamos la solicitud o reporte original
         if old_assignment.flow_request:
-            data['flow_request'] = old_assignment.flow_request.id
+            data['flow_request'] = old_assignment.flow_request.pk
         elif old_assignment.failure_report:
-            data['failure_report'] = old_assignment.failure_report.id
+            data['failure_report'] = old_assignment.failure_report.pk
 
-        serializer = AssignmentSerializer(data=data)
+        serializer = AssignmentSerializer(
+            data=data,
+            context={
+                'request': request,
+                'is_reassignment': True  # Para el serializer
+            }
+        )
+
         if serializer.is_valid():
             serializer.save(assigned_by=request.user)
             return Response({"detail": "Reasignación creada correctamente."})
-        return Response(serializer.errors, status=400)
+        else:
+            return Response({
+                "detail": "No se pudo completar la reasignación.",
+                "errors": serializer.errors
+            }, status=400)
