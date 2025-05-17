@@ -85,19 +85,19 @@ class AssignmentSerializer(serializers.ModelSerializer):
 
         if assigned_to:
             required_permission = 'communication.can_be_assigned'  # Cambia esto por el permiso que tú definas
-            if not assigned_to.has_perm(required_permission):
-                raise serializers.ValidationError(
-                    {"assigned_error":f"El usuario asignado debe tener el permiso necesario para poder completar esta accion."}
-                )
+        if not assigned_to.has_perm(required_permission):
+                raise serializers.ValidationError({
+                 "assigned_to": "Este usuario no tiene permisos para recibir asignaciones."
+    })
         
     def validate(self, data):
         self._validate_exclusive_assignment(data)
         self._validate_no_auto_assignment(data)
-        self._validate_duplicate_assignment(data)
+        self._validate_assigned_user_role(data)       
+        self._validate_duplicate_assignment(data)   
         self._validate_reassignment_logic(data)
-        self._validate_assigned_user_role(data)
-
         return data
+
 
 class MaintenanceReportSerializer(serializers.ModelSerializer):
     """Serializer para el modelo MaintenanceReport"""
