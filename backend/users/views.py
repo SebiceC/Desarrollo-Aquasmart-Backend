@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
 from drf_spectacular.utils import extend_schema, extend_schema_view,OpenApiParameter
 from rest_framework.response import Response
 from django.contrib.auth.models import Permission
-from .validate import validate_user_exist
+from .validate import validate_user_exist,is_probably_google_account
 from API.google.google_drive import upload_to_drive,share_folder
 import os
 from django.conf import settings
@@ -27,71 +27,65 @@ from API.sendmsn import send_rejection_email,send_approval_email
     )
 )
 class CustomUserCreateView(generics.CreateAPIView):
-    """
-    Vista para la creación de usuarios personalizados.
-    
-    - Usa `CreateAPIView` para manejar la creación de usuarios.
-    - `queryset` define el conjunto de datos sobre el que opera la vista.
-    - `serializer_class` especifica el serializador utilizado para validar y transformar los datos.
-    - `permission_classes` actualmente está vacío, lo que significa que cualquiera puede acceder a esta vista.
-    """
-    
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
-    permission_classes = []  # Sin restricciones de acceso (puede ser cambiado según necesidad)
-    def perform_create(self, serializer):
-        """
-        Crea un usuario y maneja la subida de archivos a Google Drive.
-        """
-        user = serializer.save()  # Guarda el usuario primero
-        uploaded_files = self.request.FILES.getlist('attachments')
-        # Obtiene los archivos subidos        
-        
-        if uploaded_files and user.drive_folder_id:
-            
-            for uploaded_file in uploaded_files:
-                temp_file_path = os.path.join(settings.MEDIA_ROOT, uploaded_file.name)
-
-                # Guardar el archivo temporalmente
-                with open(temp_file_path, 'wb+') as temp_file:
-                    for chunk in uploaded_file.chunks():
-                        temp_file.write(chunk)
-
-                # Subir archivo a Google Drive
-                upload_to_drive(temp_file_path, uploaded_file.name, folder_id=user.drive_folder_id)
-                try:
-                    share_folder(folder_id=user.drive_folder_id,email=user.email,role='reader')
-                except Exception as e:
-                    print(f"Ocurrió un error al compartir la carpeta: {e}")
-                    raise Exception(f"Error al compartir la carpeta: {e}")
-
-                # Eliminar el archivo temporal
-                os.remove(temp_file_path)
-
-            
-            user.save()
+    permission_classes = []
 
     def create(self, request, *args, **kwargs):
-        """Sobrescribe create para validar campos y manejar la respuesta personalizada."""
         # Validar campos inexistentes
-        received_fields = set(request.data.keys()) - {'attachments'}  # Excluir attachments
+        received_fields = set(request.data.keys()) - {'attachments'}
         serializer_fields = set(self.get_serializer().fields.keys())
         invalid_fields = received_fields - serializer_fields
-        
+
         if invalid_fields:
             return Response(
                 {"error": f"Los siguientes campos no existen: {', '.join(invalid_fields)}"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        response = super().create(request, *args, **kwargs)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+
+        uploaded_files = request.FILES.getlist('attachments')
+        alert_message = None
+
+        if uploaded_files and user.drive_folder_id:
+            for uploaded_file in uploaded_files:
+                temp_file_path = os.path.join(settings.MEDIA_ROOT, uploaded_file.name)
+
+                with open(temp_file_path, 'wb+') as temp_file:
+                    for chunk in uploaded_file.chunks():
+                        temp_file.write(chunk)
+
+                upload_to_drive(temp_file_path, uploaded_file.name, folder_id=user.drive_folder_id)
+
+                try:
+                    if is_probably_google_account(user.email):
+                        share_folder(folder_id=user.drive_folder_id, email=user.email, role='reader')
+                    else:
+                        alert_message = f"El correo {user.email} no parece pertenecer a una cuenta de Google."
+                except Exception as e:
+                    error_msg = str(e)
+                    if 'do not have a Google Account' in error_msg:
+                        alert_message = f"El correo {user.email} no tiene una cuenta de Google. No se puede compartir la carpeta."
+                    else:
+                        print(f"Ocurrió un error al compartir la carpeta: {e}")
+                        raise Exception(f"Error al compartir la carpeta: {e}")
+
+                os.remove(temp_file_path)
+
+        user.save()
+
         return Response(
             {
                 "message": "Usuario Pre-registrado exitosamente.",
-                "user": response.data
+                "user": CustomUserSerializer(user,fields=["document","first_name","last_name","email","drive_folder_id"]).data,
+                **({"alert": alert_message} if alert_message else {})
             },
             status=status.HTTP_201_CREATED
         )
+
     
 @extend_schema_view(
     post =extend_schema(

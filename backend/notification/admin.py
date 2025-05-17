@@ -1,3 +1,4 @@
+"""
 from django.contrib import admin
 from django.urls import reverse
 from django.utils.html import format_html
@@ -56,3 +57,4 @@ class NotificationAdmin(admin.ModelAdmin):
                             obj.content_object.id)
         return "-"
     ver_objeto.short_description = "Enlace al Objeto"
+    """

@@ -48,10 +48,11 @@ INSTALLED_APPS = [
     'storages',
     'rest_framework.authtoken',
     'rest_framework',
+    'users.apps.UsersConfig',
     'auditlog',
     
     # Local apps
-    'users',
+    
     'iot',
     'plots_lots',
     'AquaSmart',
@@ -66,10 +67,10 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'auditlog.middleware.AuditlogMiddleware',
+    'django.middleware.common.CommonMiddleware',    
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'auditlog.middleware.AuditlogMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -80,7 +81,10 @@ AUTH_USER_MODEL = 'users.CustomUser'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            os.path.join(BASE_DIR, 'templates'),  
+            os.path.join(BASE_DIR, 'communication/templates'),  
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -196,7 +200,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
-    'EXCEPTION_HANDLER': 'notification.exceptions.custom_exception_handler',
+    'EXCEPTION_HANDLER': 'API.exceptions.custom_exception_handler',
     'DEFAULT_THROTTLE_RATES': {
         'anon': '100/day',
         'user': '1000/day',
@@ -212,6 +216,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://desarrollo-aqua-smart-frontend-mu.vercel.app",
     "https://desarrollo-aquasmart-frontend2.vercel.app",
     "https://desarrollo-aqua-smart-frontend-six.vercel.app",
+    "https://desarrollo-aqua-smart-frontend-psi.vercel.app",
 ]
 
 # Notification System Configuration

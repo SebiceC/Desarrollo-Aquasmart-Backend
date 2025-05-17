@@ -14,7 +14,10 @@ from communication.reports.serializers import FailureReportSerializer
 from .models import MaintenanceReport, Assignment
 from .serializers import MaintenanceReportSerializer, AssignmentSerializer
 
-
+from .models import MaintenanceReport, Assignment
+from .serializers import MaintenanceReportSerializer, AssignmentSerializer
+from communication.permissions import CanAccessAssignmentView
+from django.db.models import Q 
 User = get_user_model()
 
 
@@ -68,18 +71,32 @@ class IsAdminOrTechnicianOrOperator(BasePermission):
                 user.groups.filter(name__in=["Técnicos", "Operadores"]).exists()
             )
         )
-    
+
 class AssignmentViewSet(viewsets.ModelViewSet):
    
     queryset = Assignment.objects.all()
     serializer_class = AssignmentSerializer
     permission_classes = [IsAuthenticated, IsAdminOrTechnicianOrOperator]
+    permission_classes = [IsAuthenticated, CanAccessAssignmentView]
 
     def get_queryset(self):
+        """
+        Filtra las asignaciones según los permisos específicos del usuario.
+        """
         user = self.request.user
-        if user.is_staff or user.groups.filter(name__in=["Técnicos", "Operadores"]).exists():
-            return Assignment.objects.all()
-        return Assignment.objects.filter(assigned_by=user)
+        
+        # Superusuarios ven todo
+        if user.is_superuser:
+            return self.queryset.all()
+            
+        # Usuarios con permiso global de vista ven todo
+        if user.has_perm('communication.view_all_assignments'):
+            return self.queryset.all()
+            
+        # Usuarios normales solo ven las que crearon o les fueron asignadas
+        return self.queryset.filter(
+            Q(assigned_by=user) | Q(assigned_to=user)
+        )
 
     def perform_create(self, serializer):
         serializer.save(assigned_by=self.request.user)
