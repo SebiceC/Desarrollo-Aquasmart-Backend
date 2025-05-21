@@ -29,6 +29,7 @@ urlpatterns = [
     path("api/caudal/",include("caudal.urls"),name="app-caudal"),
     path("api/billing/", include("billing.urls")),
     path("api/communication/", include("communication.urls")),
+    path('api/ia/', include('ia.urls')), 
     #path("api/notifications/", include("notification.urls")),
     path("api/auditlog/", include("audit_log.urls"), name="app-audit_log"),
 ]
