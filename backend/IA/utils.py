@@ -1,25 +1,24 @@
-import requests
-import os
-import json
-from dotenv import load_dotenv
-from django.conf import settings
-import os
-#import tensorflow as tf
-import joblib
-import pandas as pd
-import numpy as np
-import hashlib
-import uuid
-from django.utils import timezone
 import calendar
+from django.conf import settings
+from django.utils import timezone
+from dotenv import load_dotenv
+import hashlib
+import joblib
+import json
+import numpy as np
+import os
+import pandas as pd
+import requests
+#import tensorflow as tf
+import uuid
 
 load_dotenv()
 
 def formatear_predicciones(predicciones, fecha_inicio=None):
-    """Convierte lista de floats en lista de diccionarios con mes y valor con 2 decimales."""
+    ''' Convierte lista de floats en lista de diccionarios con mes y valor con 2 decimales. '''
     if fecha_inicio is None:
         fecha_inicio = timezone.now()
-    
+
     resultados = []
     for i, valor in enumerate(predicciones):
         mes_futuro = (fecha_inicio.month + i - 1) % 12 + 1
@@ -31,19 +30,19 @@ def formatear_predicciones(predicciones, fecha_inicio=None):
         })
     return resultados
 
-def generate_code_prediction(model,lot,meses):
-        
-        while True:
-            fecha_actual = timezone.now()
-            dia = str(fecha_actual.day)
-            mes = str(fecha_actual.month)
-            año = str(fecha_actual.year)
-            code_prediction =f"{año[-2:]}{mes}{dia}-{lot}-{meses}"       
-            if not model.objects.filter(code_prediction=code_prediction).exists():
-                return code_prediction
+def generate_code_prediction(model, lot, meses):
+    ''' Genera un código único de predicción basado en la fecha actual, el lote y la cantidad de meses. '''
+    while True:
+        fecha_actual = timezone.now()
+        dia = str(fecha_actual.day)
+        mes = str(fecha_actual.month)
+        año = str(fecha_actual.year)
+        code_prediction =f"{año[-2:]}{mes}{dia}-{lot}-{meses}"       
+        if not model.objects.filter(code_prediction=code_prediction).exists():
+            return code_prediction
 
-def api_climate_request(location,date):
-    
+def api_climate_request(location, date):
+    ''' Realiza una solicitud a una API de clima para obtener datos meteorológicos de una ubicación y fecha específicas. '''
     key = os.getenv("KEY_CLIMATE")
     scope =f"{location}/{date}/{date}?unitGroup=metric&include=days&key={key}&contentType=json"
     url_api = os.getenv("URL_CLIMATE")
@@ -51,15 +50,13 @@ def api_climate_request(location,date):
     "datetime", "tempmax", "tempmin", "precip", "precipprob", "precipcover",
     "windgust", "windspeed", "pressure", "cloudcover",
     "solarradiation", "sunrise", "sunset"
-]   
-
+    ]
     headers = {
-        
         'Accept': 'application/json'
     }
-
     url_protegido = f"{url_api}{scope}"
     response = requests.get(url_protegido, headers=headers)   
+
     if response.status_code == 200:
         data = response.json()
         print("Datos recibidos desde la API:")
@@ -67,16 +64,16 @@ def api_climate_request(location,date):
         dias = data.get("days", [])
         dias_filtrados = []
         print(json.dumps(dias[0], indent=4))
+
         for dia in dias:
             entrada = {clave: dia.get(clave) for clave in campos_deseados}          
             
             dias_filtrados.append(entrada)          
-                    
+
         return data
     else:
         print(f"Error en solicitud protegida: {response.status_code}")
         return None
-
 
 modelo_path = os.path.join(settings.BASE_DIR, 'IA', 'Modelo', 'modelo_transformer_consumo_final.h5')
 features_path = os.path.join(settings.BASE_DIR, 'IA', 'Modelo', 'features_transformer.pkl')
@@ -86,7 +83,6 @@ modelo = tf.keras.models.load_model(modelo_path)
 feature_names = joblib.load(features_path)
 scaler_X = joblib.load(scaler_x_path)
 scaler_y = joblib.load(scaler_y_path)
-
 
 # Columnas usadas en el entrenamiento del scaler (sin Año y Mes_numero)
 columnas_scaler = [
@@ -110,9 +106,7 @@ def construir_secuencia(timesteps, datos_mes_actual, historico=None):
         secuencia = np.tile(datos_mes_actual, (timesteps, 1))
     return secuencia.reshape(1, timesteps, -1)
 
-def predecir_n_meses( datos_actuales, historico, n_meses, columnas_scaler, timesteps):
-    
-    
+def predecir_n_meses(datos_actuales, historico, n_meses, columnas_scaler, timesteps):
     predicciones = []
     historial = historico.tolist() if historico is not None else []
 
@@ -133,10 +127,10 @@ def predecir_n_meses( datos_actuales, historico, n_meses, columnas_scaler, times
         # Crear nueva fila escalada con el nuevo consumo predicho (manteniendo otras variables constantes)
         nuevos_datos = datos_actuales.copy()
         nuevos_datos[indice_consumo] = pred_esc
-
         historial.append(nuevos_datos)
+
         if len(historial) > timesteps:
-          historial.pop(0)
+            historial.pop(0)
 
         datos_actuales = nuevos_datos
 
