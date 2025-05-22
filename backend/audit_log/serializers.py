@@ -21,17 +21,35 @@ class LogEntrySerializer(serializers.ModelSerializer):
             'changes_summary',
             'remote_addr',
         ]
-    
+
     def get_changes_summary(self, obj):
         changes = obj.changes or {}
-        return [
-            {
-                'field': field,
-                'old': vals[0],
-                'new': vals[1]
-            }
-            for field, vals in changes.items()
-        ]
+        summary = []
+        
+        for field, vals in changes.items():
+            if isinstance(vals, (list, tuple)) and len(vals) >= 2:
+                # Formato [old_value, new_value]
+                summary.append({
+                    'field': field,
+                    'old': vals[0],
+                    'new': vals[1]
+                })
+            elif isinstance(vals, dict) and 'old' in vals and 'new' in vals:
+                # Formato {'old': old_value, 'new': new_value}
+                summary.append({
+                    'field': field,
+                    'old': vals['old'],
+                    'new': vals['new']
+                })
+            else:
+                # Otro formato: mostrar el valor tal cual
+                summary.append({
+                    'field': field,
+                    'old': str(vals),
+                    'new': str(vals)
+                })
+
+        return summary
 
 class MyLogEntryAdminMixin(LogEntryAdminMixin):
     def get_list_display(self, request):
