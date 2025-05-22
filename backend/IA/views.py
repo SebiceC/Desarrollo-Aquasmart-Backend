@@ -1,23 +1,22 @@
-from rest_framework import viewsets, status
-from rest_framework.decorators import api_view, action
-from rest_framework.response import Response
+from datetime import datetime, timedelta
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
+from django.conf import settings
 from django.utils import timezone
+import joblib
+import os
+import pandas as pd
+from rest_framework import generics, status, viewsets
+from rest_framework.decorators import api_view, action
+from rest_framework.exceptions import ValidationError,PermissionDenied,NotFound
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+import time
 from .models import ClimateRecord,Lot
+from .models import ConsuptionPredictionLot
 from .serializers import ClimateRecordSerializer
 from .utils import api_climate_request, predecir_n_meses,formatear_predicciones, generate_code_prediction
-import time
-import pandas as pd
-from rest_framework import generics
-from .models import ConsuptionPredictionLot
 from .serializers import ConsuptionPredictionLotSerializer
-from rest_framework.permissions import IsAuthenticated
-import joblib
-from django.conf import settings
-import os
-from datetime import datetime, timedelta
-from rest_framework.exceptions import ValidationError,PermissionDenied,NotFound
-from dateutil.relativedelta import relativedelta
 
 class ClimateRecordViewSet(viewsets.ModelViewSet):
     queryset = ClimateRecord.objects.all()
@@ -126,13 +125,13 @@ class ConsuptionPredictionLotListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-       id_lot = self.request.query_params.get('lot')
-       user = self.request.user
+        id_lot = self.request.query_params.get('lot')
+        user = self.request.user
 
-       if user.has_perm("AquaSmart.ver_predicciones_lotes"):
-        return ConsuptionPredictionLot.objects.all().order_by('-created_at')
+        if user.has_perm("AquaSmart.ver_predicciones_lotes"):
+            return ConsuptionPredictionLot.objects.all().order_by('-created_at')
 
-       elif user.has_perm("AquaSmart.ver_prediccion_consumo_mi_lote"):
+        elif user.has_perm("AquaSmart.ver_prediccion_consumo_mi_lote"):
             if id_lot:
                 try:
                     lot_instan = Lot.objects.get(pk=id_lot)
@@ -149,12 +148,12 @@ class ConsuptionPredictionLotListCreateView(generics.ListCreateAPIView):
                     lot__plot__owner=user
                 ).order_by('-created_at')
 
-       raise PermissionDenied("No tienes permiso para ver las predicciones.")
+        raise PermissionDenied("No tienes permiso para ver las predicciones.")
 
     def perform_create(self, serializer):
         user = self.request.user
         lot = serializer.validated_data['lot']
-              
+
         lot_id= lot.id_lot  
         if user.has_perm("AquaSmart.generar_predicciones_lotes"):
             pass  # Admin: puede generar predicciones para cualquier lote
@@ -178,7 +177,7 @@ class ConsuptionPredictionLotListCreateView(generics.ListCreateAPIView):
             if period_time == 1:
                 text_mes = "Mes"
             else:
-                 text_mes = "Meses"   
+                text_mes = "Meses"   
             raise ValidationError({
                 "detail": f"Ya existe una predicción activa para este lote con ese periodo de {period_time} {text_mes }.",                
             })
@@ -186,7 +185,7 @@ class ConsuptionPredictionLotListCreateView(generics.ListCreateAPIView):
         fecha_actual = datos.datetime
         mes = str(fecha_actual.month)
         año = str(fecha_actual.year)      
-        
+
         datos_usuario = {
         'Año': año,
         'Mes_numero': mes,
@@ -217,18 +216,18 @@ class ConsuptionPredictionLotListCreateView(generics.ListCreateAPIView):
 
         # Obtener datos para la predicción
         datos_actuales = datos_usuario_scaled[0]
-        
+
         historico = None
         timesteps = 3
         # Ejecutar la predicción
         predicciones = predecir_n_meses(datos_actuales, historico, period_time, columnas_scaler, timesteps)
-       
+
         predicciones_formateadas = formatear_predicciones(predicciones, fecha_inicio=timezone.now())
 
         # Crear un código único para agrupar las predicciones
         code_prediction = generate_code_prediction(ConsuptionPredictionLot,lot_id,period_time)
         final_date = timezone.now() + timedelta(days=7)
-        
+
         for i, pred in enumerate(predicciones_formateadas):            
             date_prediction = final_date.date() + relativedelta(months=i+1)    
             ConsuptionPredictionLot.objects.create(
@@ -236,7 +235,7 @@ class ConsuptionPredictionLotListCreateView(generics.ListCreateAPIView):
                 lot=lot,                
                 period_time=period_time,
                 created_at=timezone.now(),
-                 date_prediction =date_prediction,
+                date_prediction =date_prediction,
                 consumption_prediction=pred['valor'],
                 code_prediction=code_prediction,
                 final_date=final_date
