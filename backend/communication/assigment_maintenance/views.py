@@ -76,7 +76,6 @@ class AssignmentViewSet(viewsets.ModelViewSet):
    
     queryset = Assignment.objects.all()
     serializer_class = AssignmentSerializer
-    permission_classes = [IsAuthenticated, IsAdminOrTechnicianOrOperator]
     permission_classes = [IsAuthenticated, CanAccessAssignmentView]
 
     def get_queryset(self):
@@ -207,8 +206,7 @@ class ReassignAssignmentView(APIView):
     """
     Permite reasignar una solicitud o reporte a otro técnico u operador.
     """
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
+    permission_classes = [IsAuthenticated,  IsAdminUser]
     def post(self, request, pk):
         try:
             old_assignment = Assignment.objects.get(pk=pk)

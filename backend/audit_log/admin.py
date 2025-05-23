@@ -36,10 +36,22 @@ class CustomLogEntryAdmin(BaseLogEntryAdmin):
         """
         Toma el diccionario obj.changes y lo convierte
         en un string tipo "campoA: old → new, campoB: old → new"
+        Maneja diferentes formatos de datos en el campo changes
         """
         changes = obj.changes or {}
-        return ", ".join(
-            f"{field}: {vals[0]} → {vals[1]}" for field, vals in changes.items()
-        )
+        summary = []
+        
+        for field, vals in changes.items():
+            if isinstance(vals, (list, tuple)) and len(vals) >= 2:
+                # Formato [old_value, new_value]
+                summary.append(f"{field}: {vals[0]} → {vals[1]}")
+            elif isinstance(vals, dict) and 'old' in vals and 'new' in vals:
+                # Formato {'old': old_value, 'new': new_value}
+                summary.append(f"{field}: {vals['old']} → {vals['new']}")
+            else:
+                # Otro formato: mostrar el valor tal cual
+                summary.append(f"{field}: {vals}")
+        
+        return ", ".join(summary) if summary else "Sin cambios"
 
     changes_summary.short_description = "Resumen de cambios"

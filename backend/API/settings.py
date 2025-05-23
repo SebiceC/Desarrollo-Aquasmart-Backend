@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_filters',
     'corsheaders',
     'drf_spectacular',
     'storages',
@@ -54,7 +55,8 @@ INSTALLED_APPS = [
     'AquaSmart',
     'caudal',
     'billing',
-    'communication',       
+    'communication', 
+    'mqtt',  
     #'IA',
     'audit_log'
 ]
@@ -207,7 +209,14 @@ REST_FRAMEWORK = {
         'anon': '100/day',
         'user': '1000/day',
         'notification': '50/hour'
-    }
+    },
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 40,  # Número de registros por página
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
 }
 
 # CORS

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Bill
+from .models import Bill,STATUS_CHOICES
 from billing.rates.models import FixedConsumptionRate, VolumetricConsumptionRate
 from plots_lots.models import CropType
 
@@ -79,3 +79,12 @@ class BillSerializer(serializers.ModelSerializer):
         if creation and dian_validation and dian_validation <= creation:
             raise serializers.ValidationError("La fecha de validación de la DIAN debe ser posterior a la de creación de la factura.")
         return attrs
+
+class BillStatusUpdateSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    status = serializers.ChoiceField(choices=[('pagada', dict(STATUS_CHOICES)['pagada'])])
+
+    def validate(self, data):
+        if data['status'] != 'pagada':
+            raise serializers.ValidationError("Solo se permite cambiar el estado a 'pagada'.")
+        return data    

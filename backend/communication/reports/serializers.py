@@ -54,9 +54,11 @@ class FailureReportSerializer(serializers.ModelSerializer):
 
         # Validaciones específicas de APPLICATION_FAILURE
         if failure_type == TypeReport.APPLICATION_FAILURE:
-            if len(observations) < 10 or len(observations) > 200:
+         if observations and not (10 <= len(observations) <= 300):
+                 raise serializers.ValidationError("Las observaciones deben tener entre 10 y 200 caracteres.")
+         if len(observations) < 10 or len(observations) > 200:
                 raise serializers.ValidationError("Las observaciones deben estar entre los 10 y 200 caracteres.")
-            else: print("Las observaciones SÍ ESTÁN entre los 10 y 200 caracteres.")
+         else: print("Las observaciones SÍ ESTÁN entre los 10 y 200 caracteres.")
         else: print(failure_type != TypeReport.APPLICATION_FAILURE)
 
         # Validar predio activo
