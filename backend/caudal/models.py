@@ -62,7 +62,7 @@ class FlowMeasurementLote(models.Model):
         IoTDevice, on_delete=models.SET_NULL, related_name="flow_measurements_lote",
         verbose_name="Dispositivo IoT", null=True, blank=True
     )
-    flow_rate = models.FloatField(verbose_name="Caudal (L/s)")
+    flow_rate = models.FloatField(verbose_name="Caudal (m³/s)")
     timestamp = models.DateTimeField(verbose_name="Fecha y Hora")
 
     class Meta:
@@ -71,7 +71,7 @@ class FlowMeasurementLote(models.Model):
         ordering = ['-timestamp']
 
     def __str__(self):
-        return f"Caudal Lote {self.lot.id_lot}: {self.flow_rate} L/s ({self.timestamp})"
+        return f"Caudal Lote {self.lot.id_lot}: {self.flow_rate} m³/s ({self.timestamp})"
 
     def verificar_inconsistencia(self):
         """ Valida y guarda inconsistencias si hay diferencias significativas, sin validar tiempo. """
@@ -139,56 +139,6 @@ class FlowInconsistency(models.Model):
         return (
             f"Inconsistencia en {self.plot.plot_name}: Diferencia de {self.difference:.3f} m³/s"
         )
-from billing.bill.models import Bill        
-class WaterConsumptionRecord(models.Model):
-    lot = models.ForeignKey(
-        Lot, on_delete=models.CASCADE, related_name="water_consumption_records",
-        verbose_name="Lote"
-    )
-    device = models.ForeignKey(
-        IoTDevice, on_delete=models.SET_NULL, related_name="water_consumption_records",
-        verbose_name="Dispositivo IoT", null=True, blank=True
-    )
-    # Lecturas del medidor
-    previous_reading = models.FloatField(verbose_name="Lectura anterior (m³)", help_text="Lectura anterior del medidor en metros cúbicos")
-    current_reading = models.FloatField(verbose_name="Lectura actual (m³)", help_text="Lectura actual del medidor en metros cúbicos")
-    
-    # Periodo de medición
-    start_date = models.DateTimeField(verbose_name="Fecha inicial del periodo")
-    end_date = models.DateTimeField(verbose_name="Fecha final del periodo")
-    
-    # Consumos calculados
-    period_consumption = models.FloatField(verbose_name="Consumo del periodo (m³)", help_text="Consumo de agua durante el periodo actual")
-    monthly_consumption = models.FloatField(verbose_name="Consumo mensual (m³)", help_text="Consumo total del mes calendario")
-    accumulated_consumption = models.FloatField(verbose_name="Consumo acumulado (m³)", help_text="Consumo total acumulado desde la instalación")
-    
-    # Para facturación
-    billed = models.BooleanField(default=False, verbose_name="Facturado", help_text="Indica si este consumo ya ha sido facturado")
-    bill = models.ForeignKey(
-        Bill, on_delete=models.SET_NULL, null=True, blank=True, 
-        related_name="consumption_records", verbose_name="Factura asociada"
-    )
-    
-    # Metadatos
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de registro")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Última actualización")
-    
-    class Meta:
-        verbose_name = "Registro de Consumo de Agua"
-        verbose_name_plural = "Registros de Consumo de Agua"
-        ordering = ['-end_date']
-    
-    def __str__(self):
-        return f"Consumo Lote {self.lot.id_lot}: {self.period_consumption} m³ ({self.start_date.strftime('%d/%m/%Y')} - {self.end_date.strftime('%d/%m/%Y')})"
-    
-    def save(self, *args, **kwargs):
-        # Calcular el consumo del periodo si no está establecido
-        if not self.period_consumption and self.current_reading is not None and self.previous_reading is not None:
-            self.period_consumption = max(0, self.current_reading - self.previous_reading)
-            
-        # Otros cálculos automáticos podrían ir aquí
-        
-        super().save(*args, **kwargs)        
 auditlog.register(FlowInconsistency)
 auditlog.register(FlowMeasurementLote)      
 auditlog.register(FlowMeasurementPredio)     

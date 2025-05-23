@@ -3,26 +3,16 @@ from rest_framework import viewsets, status
 from rest_framework import serializers
 from rest_framework.response import Response
 from django.contrib.auth.models import Group, Permission
-from .serializers import GroupSerializer, PermissionSerializer,GroupPermissionSerializer,UsersGroupSerializer
+from .serializers import GroupSerializer, PermissionSerializer,GroupPermissionSerializer
 from rest_framework.views import APIView
 from collections import defaultdict
 from users.models import CustomUser
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
-from .permissions import (
-    CanViewPermissionsAssignedUser,
-    CanAssignPermissionsAssignedUser,
-    CanRemovePermissionsAssigneduser,
-    CanViewGroupsAssignedUser,
-    CanRemoveGroupsAssignedUser,
-    CanAssignGroupsAssignedUser
-    )
-from django.shortcuts import get_object_or_404
 
 class GroupViewSet(viewsets.ModelViewSet):
-    
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
-    permission_classes = [IsAuthenticated, CanViewGroupsAssignedUser]
+    permission_classes = [IsAdminUser, IsAuthenticated]
 
     def assign_permissions(self, request, pk=None):
         group = self.get_object()
@@ -79,7 +69,7 @@ class GroupPermissionsView(APIView):
     """
     Listar los permisos de un grupo específico.
     """
-    permission_classes = [CanViewGroupsAssignedUser, IsAuthenticated]
+    permission_classes = [IsAdminUser, IsAuthenticated]
     def get(self, request, pk=None):
         group = Group.objects.get(pk=pk)
         permissions = group.permissions.all()
@@ -111,7 +101,7 @@ class UserPermissionsView(APIView):
     """
     Obtener los permisos de un usuario agrupados por grupo.
     """   
-    permission_classes = [CanViewPermissionsAssignedUser, IsAuthenticated]
+    permission_classes = [IsAdminUser, IsAuthenticated]
 
     def get(self, request, user_id):
         try:
@@ -147,7 +137,7 @@ class AddUserPermissionsView(APIView):
     """
     Agregar permisos directamente a un usuario.
     """
-    permission_classes = [CanAssignPermissionsAssignedUser, IsAuthenticated]
+    permission_classes = [IsAdminUser, IsAuthenticated]
     def post(self, request, user_id):
         try:
             user = CustomUser.objects.get(document=user_id)
@@ -183,7 +173,7 @@ class RemoveUserPermissionsView(APIView):
     """
     Remover permisos directamente de un usuario.
     """
-    permission_classes = [CanRemovePermissionsAssigneduser, IsAuthenticated]
+    permission_classes = [IsAdminUser, IsAuthenticated]
     def post(self, request, user_id):
         try:
             user = CustomUser.objects.get(document=user_id)
@@ -220,7 +210,6 @@ class AssignGroupToUserView(APIView):
     """
     Asignar un grupo a un usuario.
     """
-    permission_classes =[CanAssignGroupsAssignedUser, IsAuthenticated]
     def post(self, request, user_id):
         try:
             user = CustomUser.objects.get(document=user_id)
@@ -245,7 +234,6 @@ class RemoveGroupFromUserView(APIView):
     """
     Quitar un grupo de un usuario.
     """
-    permission_classes = [CanRemoveGroupsAssignedUser, IsAuthenticated]
     def post(self, request, user_id):
         try:
             user = CustomUser.objects.get(document=user_id)
@@ -266,12 +254,3 @@ class RemoveGroupFromUserView(APIView):
 
         return Response({"detail": f"Grupo '{group.name}' quitado del usuario '{user.first_name}' correctamente."}, status=status.HTTP_200_OK)    
 
-class GroupUsersView(APIView):
-    
-    permission_classes = [CanViewGroupsAssignedUser,IsAuthenticated]
-    
-    def get(self, request, group_id):
-        group = get_object_or_404(Group, id=group_id)
-        users = group.user_set.all()
-        serializer = UsersGroupSerializer(users, many=True)
-        return Response(serializer.data)

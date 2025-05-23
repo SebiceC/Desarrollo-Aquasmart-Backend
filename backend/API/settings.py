@@ -15,26 +15,30 @@ from datetime import timedelta
 from dotenv import load_dotenv
 import os
 import dj_database_url
-import sentry_sdk
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-from sentry_sdk.integrations.django import DjangoIntegration
 
 load_dotenv()
-
-# Build paths
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Security
+
+# Quick-start development settings - unsuitable for production
+# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
+
+# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', default=os.getenv("SECRET_KEY"))
+
+# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = 'RENDER' not in os.environ
 
 ALLOWED_HOSTS = []
-
-if RENDER_EXTERNAL_HOSTNAME := os.environ.get('RENDER_EXTERNAL_HOSTNAME'):
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
 # Application definition
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -42,52 +46,42 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django_filters',
     'corsheaders',
     'drf_spectacular',
     'storages',
     'rest_framework.authtoken',
     'rest_framework',
-    'users.apps.UsersConfig',
-    'auditlog',  
+    'users',
     'iot',
     'plots_lots',
-    'AquaSmart',
+    "AquaSmart",
+    'auditlog',
     'caudal',
     'billing',
-    'communication',       
-    #'IA',
-    'audit_log'
+    'communication'
 ]
+
+AUTH_USER_MODEL ='users.CustomUser'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',    
+    'django.middleware.common.CommonMiddleware',
+    'auditlog.middleware.AuditlogMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'auditlog.middleware.AuditlogMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-AUDITLOG_INCLUDE_ALL_MODELS=True
-
 ROOT_URLCONF = 'API.urls'
-AUTH_USER_MODEL = 'users.CustomUser'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            os.path.join(BASE_DIR, 'templates'),  
-            os.path.join(BASE_DIR, 'communication/templates'),
-            os.path.join(BASE_DIR, 'IA/Modelo'),
-            os.path.join(BASE_DIR, 'IA/Scaler'),
-              
-        ],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -102,16 +96,34 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'API.wsgi.application'
 
+
 # Database
+# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
+"""
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+"""
+# Database documentation https://docs.djangoproject.com/en/5.0/ref/settings/#databases
+
 DATABASES = {
     'default': dj_database_url.config(
+        # Replace this value with your local database's connection string.
         default='sqlite:///db.sqlite3',
         conn_max_age=600
     )
 }
 
 # Password validation
+# https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
+
 class MaximumLengthValidator:
+    """
+    Valida que la contraseña no exceda un número máximo de caracteres.
+    """
     def __init__(self, max_length=20):
         self.max_length = max_length
         
@@ -125,8 +137,11 @@ class MaximumLengthValidator:
             
     def get_help_text(self):
         return _("Tu contraseña no puede tener más de %(max_length)d caracteres.") % {'max_length': self.max_length}
-
+        
 class UppercaseValidator:
+    """
+    Valida que la contraseña contenga al menos una letra mayúscula.
+    """
     def validate(self, password, user=None):
         if not any(char.isupper() for char in password):
             raise ValidationError(
@@ -136,8 +151,11 @@ class UppercaseValidator:
             
     def get_help_text(self):
         return _("Tu contraseña debe contener al menos una letra mayúscula.")
-
+        
 class LowercaseValidator:
+    """
+    Valida que la contraseña contenga al menos una letra minúscula.
+    """
     def validate(self, password, user=None):
         if not any(char.islower() for char in password):
             raise ValidationError(
@@ -147,54 +165,95 @@ class LowercaseValidator:
             
     def get_help_text(self):
         return _("Tu contraseña debe contener al menos una letra minúscula.")
-
+        
 class SpecialCharValidator:
+    """
+    Valida que la contraseña contenga al menos un carácter especial.
+    """
     def __init__(self, special_chars="@#$%^&*()_+-=[]{}|;:'\",.<>/?`~"):
         self.special_chars = special_chars
         
     def validate(self, password, user=None):
         if not any(char in self.special_chars for char in password):
             raise ValidationError(
-                _("La contraseña debe contener al menos un carácter especial."),
+                _("La contraseña debe contener al menos un carácter especial (como @, #, $, etc.)."),
                 code='password_no_symbol',
             )
             
     def get_help_text(self):
-        return _("Tu contraseña debe contener al menos un carácter especial.")
+        return _("Tu contraseña debe contener al menos un carácter especial (como @, #, $, etc.).")
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-        'OPTIONS': {'user_attributes': ['document', 'first_name', 'last_name', 'email', 'phone'], 'max_similarity': 0.7}
+        'OPTIONS': {
+            'user_attributes': ['document', 'first_name', 'last_name', 'email', 'phone'],
+            'max_similarity': 0.7,
+        }
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-        'OPTIONS': {'min_length': 8}
+        'OPTIONS': {
+            'min_length': 8,
+        }
     },
-    {'NAME': 'API.settings.MaximumLengthValidator', 'OPTIONS': {'max_length': 20}},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
-    {'NAME': 'API.settings.UppercaseValidator'},
-    {'NAME': 'API.settings.LowercaseValidator'},
-    {'NAME': 'API.settings.SpecialCharValidator'},
+    {
+        'NAME': 'API.settings.MaximumLengthValidator',  # Usa la ruta completa al módulo
+        'OPTIONS': {
+            'max_length': 20,
+        }
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+    {
+        'NAME': 'API.settings.UppercaseValidator',  # Usa la ruta completa al módulo
+    },
+    {
+        'NAME': 'API.settings.LowercaseValidator',  # Usa la ruta completa al módulo
+    },
+    {
+        'NAME': 'API.settings.SpecialCharValidator',  # Usa la ruta completa al módulo
+    },
 ]
 
+
 # Internationalization
+# https://docs.djangoproject.com/en/5.1/topics/i18n/
+
 LANGUAGE_CODE = 'es-CO'
+
 TIME_ZONE = 'America/Bogota'
+
 USE_I18N = True
+
 USE_L10N = True
+
 USE_TZ = False
 
-# Static files
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/5.1/howto/static-files/
+
 STATIC_URL = 'static/'
+
+# This production code might break development mode, so we check whether we're in DEBUG mode
 if not DEBUG:
+    # Tell Django to copy static assets into a path called `staticfiles` (this is specific to Render)
     STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+    # Enable the WhiteNoise storage backend, which compresses static files to reduce disk use
+    # and renames the files with unique names for each version to support long-term caching
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Default primary key field type
+# https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# REST Framework
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -202,26 +261,15 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
-    ],
-    'EXCEPTION_HANDLER': 'API.exceptions.custom_exception_handler',
-    'DEFAULT_THROTTLE_RATES': {
-        'anon': '100/day',
-        'user': '1000/day',
-        'notification': '50/hour'
-    },
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 40,  # Número de registros por página
-    'DEFAULT_FILTER_BACKENDS': [
-        'django_filters.rest_framework.DjangoFilterBackend',
-        'rest_framework.filters.SearchFilter',
-        'rest_framework.filters.OrderingFilter',
-    ],
+    ]
+    
 }
 
-# CORS
+
+# Configurar los dominios permitidos
 CORS_ALLOWED_ORIGINS = [
     "https://tu-frontend.com",
-    "http://localhost:5173",
+    "http://localhost:5173",  # Para desarrollo con React
     "http://localhost:8081",
     "https://desarrollo-aqua-smart-frontend-mu.vercel.app",
     "https://desarrollo-aquasmart-frontend2.vercel.app",
@@ -229,132 +277,38 @@ CORS_ALLOWED_ORIGINS = [
     "https://desarrollo-aqua-smart-frontend-psi.vercel.app",
 ]
 
-# Notification System Configuration
-NOTIFICATION_CONFIG = {
-    'ENABLED_CHANNELS': {
-        'EMAIL': True,
-        'SMS': False,
-        'PUSH': False,
-        'IN_APP': True
-    },
-    'GROUPS': {
-        'ADMIN': 'Administradores',
-        'TECH': 'Tecnicos',
-        'RECEPTION': 'Recepcion_Reportes'
-    },
-    'EMAIL_SETTINGS': {
-        'HOST': os.getenv('EMAIL_HOST', 'smtp.gmail.com'),
-        'USER': os.getenv('EMAIL_HOST_USER', ''),
-        'PASSWORD': os.getenv('EMAIL_HOST_PASSWORD', ''),
-        'PORT': os.getenv('EMAIL_PORT', 587),
-        'USE_TLS': str(os.getenv('EMAIL_USE_TLS', 'True')).lower() == 'true',
-        'TIMEOUT': int(os.getenv('EMAIL_TIMEOUT', 5)),
-        'DELIVERY_TIMEOUTS': {
-            'EMAIL': 300  # 5 minutos para cumplir RF71 (en segundos)
-        }
-    },
-    'RECIPIENTS': {
-        'ADMIN_EMAILS': [email.strip() for email in os.getenv('ADMIN_EMAILS', '').split(',')],
-        'DEFAULT_FROM': os.getenv('EMAIL_HOST_USER', ''),
-        'REPLY_TO': os.getenv('EMAIL_REPLY_TO', '')
-    },
-    'TEMPLATES': {
-        'EMAIL': {
-            'REPORT_CREATED': {
-                'path': 'emails/report_created.html',
-                'subject': '[AquaSmart] Nuevo Reporte #{report_id}',
-                'priority': 'high'
-            },
-            'REPORT_ASSIGNED': {
-                'path': 'emails/report_assigned.html',
-                'subject': '[AquaSmart] Asignación de Reporte #{report_id}',
-                'priority': 'medium'
-            },
-            'REPORT_COMPLETED': {
-                'path': 'emails/report_completed.html',
-                'subject': '[AquaSmart] Reporte #{report_id} Completado y Aprobado',
-                'priority': 'low',
-                'timeout': 300  # 5 minutos para RF71
-            }
-        }
-    },
-    'SETTINGS': {
-        'APP_NAME': 'AquaSmart',
-        'FRONTEND_URL': os.getenv('FRONTEND_URL', 'http://localhost:3000')
-    },
-    'MONITORING': {
-        'SENTRY_DSN': os.getenv('SENTRY_DSN', ''),
-        'LOG_LEVEL': os.getenv('NOTIFICATION_LOG_LEVEL', 'INFO'),
-        'MAX_RETRIES': 3
-    }
-}
+# También puedes permitir todas las solicitudes (NO recomendado en producción)
+#CORS_ALLOW_ALL_ORIGINS = True  # O usar CORS_ALLOWED_ORIGINS para mayor control
 
-# Configuración adicional de email para Django
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = NOTIFICATION_CONFIG['EMAIL_SETTINGS']['HOST']
-EMAIL_PORT = NOTIFICATION_CONFIG['EMAIL_SETTINGS']['PORT']
-EMAIL_HOST_USER = NOTIFICATION_CONFIG['EMAIL_SETTINGS']['USER']
-EMAIL_HOST_PASSWORD = NOTIFICATION_CONFIG['EMAIL_SETTINGS']['PASSWORD']
-EMAIL_USE_TLS = NOTIFICATION_CONFIG['EMAIL_SETTINGS']['USE_TLS']
-EMAIL_TIMEOUT = NOTIFICATION_CONFIG['EMAIL_SETTINGS']['DELIVERY_TIMEOUTS']['EMAIL']
-DEFAULT_FROM_EMAIL = NOTIFICATION_CONFIG['RECIPIENTS']['DEFAULT_FROM']
-
-
-# Spectacular Settings
 SPECTACULAR_SETTINGS = {
-    "TITLE": "AQUASMART - Sistema de Gestión de Riego",
-    "DESCRIPTION": "API para la gestión inteligente de sistemas de riego en Colombia",
-    "VERSION": "1.0.0",
+    "TITLE": "AQUASMART",
+    "DESCRIPTION": "API creada para la gestion de sistemas de reigo en colombia",
+    "VERSION": "0.1.0",  # Aquí defines la versión
     "SERVE_INCLUDE_SCHEMA": False,
-    "SCHEMA_PATH_PREFIX": r'/api/',
-    "COMPONENT_SPLIT_REQUEST": True,
-    "ENUM_NAME_OVERRIDES": {
-        "NotificationType": "notification.models.Notification.NotificationTypes",
-        "ReportStatus": "reportes.models.Reporte.Status",
-    },
-    "SWAGGER_UI_SETTINGS": {
-        "deepLinking": True,
-        "persistAuthorization": True,
-    },
 }
 
-# # Auditlog Configuration
-# AUDITLOG_INCLUDE_TRACKING_MODELS = [
-#     'notification.models.Notification',
-#     'notification.models.EmailNotification',
-#     'reportes.models.Reporte',
-#     'reportes.models.AsignacionReporte',
-#     'reportes.models.InformeMantenimiento',
-# ]
+#EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', default=os.getenv("EMAIL_HOST_USER"))
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', default=os.getenv("EMAIL_HOST_PASSWORD"))  
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-AUDITLOG_CONFIG = {
-    'USE_JSONFIELD': True,
-    'REGISTER_ADMIN': True,
-}
 
-# Google Drive Storage
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Configuración de Google Drive
 GOOGLE_DRIVE_STORAGE_JSON_KEY_FILE = os.path.join(BASE_DIR, 'API/google/client_secret.json')
 GOOGLE_DRIVE_STORAGE_MEDIA_ROOT = 'Prueba'
+
+# Configuración de Django Storages
 DEFAULT_FILE_STORAGE = 'storages.backends.google_drive.GoogleDriveStorage'
 
-# Security Headers
-if not DEBUG:
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    SECURE_SSL_REDIRECT = True
-    SECURE_HSTS_SECONDS = 31536000  # 1 year
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
-    SECURE_CONTENT_TYPE_NOSNIFF = True
-    X_FRAME_OPTIONS = 'DENY'
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
 
-# Sentry Configuration
-if not DEBUG and os.getenv('SENTRY_DSN'):
-    sentry_sdk.init(
-        dsn=os.getenv('SENTRY_DSN'),
-        integrations=[DjangoIntegration()],
-        traces_sample_rate=1.0,
-        send_default_pii=True,
-        environment="production" if not DEBUG else "development"
-    )
+AUDITLOG_INCLUDE_ADMIN = True
+AUDITLOG_EXCLUDE_TRACKING = []

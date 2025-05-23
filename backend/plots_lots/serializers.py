@@ -34,12 +34,6 @@ class LotSerializer(serializers.ModelSerializer):
         }
     )
 
-    def validate_is_activate(self, value):
-        ''' Valida que no se pueda activar un lote si su predio está desactivado '''
-        if self.plot.is_activate == False:
-            if value == True:
-                raise serializers.ValidationError("No se puede habilitar el lote si el predio al cual pertenece está deshabilitado.")
-
     class Meta:
         model = Lot
         fields = ['id_lot', 'plot', 'crop_name', 'crop_type', 'crop_variety', 'soil_type', 'is_activate', 'registration_date']

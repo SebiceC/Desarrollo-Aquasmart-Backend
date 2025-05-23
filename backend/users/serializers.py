@@ -39,7 +39,6 @@ class CustomUserSerializer(serializers.ModelSerializer):
     Serializer para el modelo CustomUser.
     Gestiona la creación de usuarios, incluyendo el manejo seguro de contraseñas.
     """
-    
     password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
     document_type = serializers.PrimaryKeyRelatedField(queryset=DocumentType.objects.all(), required=False)
     person_type = serializers.PrimaryKeyRelatedField(queryset=PersonType.objects.all(), required=False)
@@ -50,15 +49,6 @@ class CustomUserSerializer(serializers.ModelSerializer):
         required=False
     )
 
-    def __init__(self, *args, **kwargs):
-        fields = kwargs.pop('fields', None)
-        super().__init__(*args, **kwargs)
-
-        if fields is not None:
-            allowed = set(fields)
-            existing = set(self.fields)
-            for field_name in existing - allowed:
-                self.fields.pop(field_name)
 
     class Meta:
         model = CustomUser

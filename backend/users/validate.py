@@ -100,8 +100,3 @@ def validate_user_current_password(value, user):
     if not user.check_password(value):
         raise serializers.ValidationError("La contraseña actual es incorrecta.")
     return value
-
-google_domains = ['@gmail.com', '@googlemail.com', '@outlook.com', '@hotmail.com', '@yahoo.com']
-
-def is_probably_google_account(email):
-    return any(email.lower().endswith(domain) for domain in google_domains)
