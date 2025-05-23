@@ -210,8 +210,6 @@ REST_FRAMEWORK = {
         'user': '1000/day',
         'notification': '50/hour'
     },
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 40,  # Número de registros por página
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
         'rest_framework.filters.SearchFilter',
