@@ -9,13 +9,13 @@ import numpy as np
 import os
 import pandas as pd
 import requests
-#import tensorflow as tf
+import tensorflow as tf
 import uuid
 
 load_dotenv()
 
 def formatear_predicciones(predicciones, fecha_inicio=None):
-    ''' Convierte lista de floats en lista de diccionarios con mes y valor con 2 decimales. '''
+    '''Convierte lista de floats (en m³) en lista de diccionarios con mes y valor en litros con 2 decimales.'''
     if fecha_inicio is None:
         fecha_inicio = timezone.now()
 
@@ -24,22 +24,32 @@ def formatear_predicciones(predicciones, fecha_inicio=None):
         mes_futuro = (fecha_inicio.month + i - 1) % 12 + 1
         año_futuro = fecha_inicio.year + ((fecha_inicio.month + i - 1) // 12)
         nombre_mes = calendar.month_name[mes_futuro]
+        
+        litros = float(valor) * 1000  # Conversión de m³ a litros
         resultados.append({
             "mes": f"{nombre_mes} {año_futuro}",
-            "valor": round(float(valor), 2)
+            "valor": round(litros, 2)
         })
     return resultados
 
-def generate_code_prediction(model, lot, meses):
+def generate_code_prediction(model,meses,lot=None):
     ''' Genera un código único de predicción basado en la fecha actual, el lote y la cantidad de meses. '''
-    while True:
+    if lot is None:
         fecha_actual = timezone.now()
         dia = str(fecha_actual.day)
         mes = str(fecha_actual.month)
         año = str(fecha_actual.year)
-        code_prediction =f"{año[-2:]}{mes}{dia}-{lot}-{meses}"       
-        if not model.objects.filter(code_prediction=code_prediction).exists():
-            return code_prediction
+        code_prediction =f"{año[-2:]}{mes}{dia}-Bocatoma-001-{meses}"      
+        return code_prediction
+    else:    
+        while True:
+            fecha_actual = timezone.now()
+            dia = str(fecha_actual.day)
+            mes = str(fecha_actual.month)
+            año = str(fecha_actual.year)
+            code_prediction =f"{año[-2:]}{mes}{dia}-{lot}-{meses}"       
+            if not model.objects.filter(code_prediction=code_prediction).exists():
+                return code_prediction
 
 def api_climate_request(location, date):
     ''' Realiza una solicitud a una API de clima para obtener datos meteorológicos de una ubicación y fecha específicas. '''
@@ -64,12 +74,10 @@ def api_climate_request(location, date):
         dias = data.get("days", [])
         dias_filtrados = []
         print(json.dumps(dias[0], indent=4))
-
         for dia in dias:
             entrada = {clave: dia.get(clave) for clave in campos_deseados}          
             
             dias_filtrados.append(entrada)          
-
         return data
     else:
         print(f"Error en solicitud protegida: {response.status_code}")

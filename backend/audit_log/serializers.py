@@ -5,8 +5,8 @@ from auditlog.filters import ResourceTypeFilter, CIDFilter
 
 
 class LogEntrySerializer(serializers.ModelSerializer):
-    actor = serializers.StringRelatedField()  # Muestra el username del actor
-    content_type = serializers.StringRelatedField()  # Muestra el nombre del modelo
+    actor = serializers.SerializerMethodField()
+    content_type = serializers.StringRelatedField()
     changes_summary = serializers.SerializerMethodField()
     created = serializers.DateTimeField(source='timestamp')
     action = serializers.SerializerMethodField()
@@ -33,6 +33,12 @@ class LogEntrySerializer(serializers.ModelSerializer):
             3: 'access'
         }
         return action_map.get(obj.action, 'unknown')
+
+    def get_actor(self, obj):
+        ''' Reemplazar el actor null por el actor Sistema '''
+        if not obj.actor:
+            return 'Sistema'
+        return str(obj.actor)
 
     def get_changes_summary(self, obj):
         changes = obj.changes or {}
@@ -78,16 +84,16 @@ class MyLogEntryAdminMixin(LogEntryAdminMixin):
         return [
             "action",
             ResourceTypeFilter,
-            # CIDFilter,      # si quieres filtro de correlation ID
+            # CIDFilter,      # si se desea filtro de correlation ID
         ]
 
     def get_search_fields(self, request):
         return [
-            "actor__username",
+            "actor__document",
             "object_repr",
             "changes",
         ]
 
     def get_readonly_fields(self, request, obj=None):
-        # si quieres cambiar campos de solo lectura en el detalle
+        # Si se desea cambiar campos de solo lectura en el detalle
         return ["created", "user_url", "resource_url", "msg"]

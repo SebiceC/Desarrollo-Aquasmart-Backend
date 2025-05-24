@@ -1,5 +1,7 @@
 from django.contrib import admin
-from .models import ClimateRecord, ConsuptionPredictionLot
+from .models import ClimateRecord, ConsuptionPredictionLot,ConsuptionPredictionBocatoma
+import csv
+from django.http import HttpResponse
 
 @admin.register(ClimateRecord)
 class ClimateRecordAdmin(admin.ModelAdmin):
@@ -75,8 +77,44 @@ class ConsuptionPredictionLotAdmin(admin.ModelAdmin):
 
     # Opcional: Añadir un list_per_page
     list_per_page = 25 # Número de elementos por página en la lista
+    
+@admin.register(ConsuptionPredictionBocatoma)
+class ConsuptionPredictionBocatomaAdmin(admin.ModelAdmin):
+    list_display = (
+        'code_prediction', 
+        'user', 
+        'period_time', 
+        'date_prediction', 
+        'consumption_prediction', 
+        'created_at', 
+        'final_date'
+    )
+    list_filter = (
+        'period_time', 
+        'created_at', 
+        'date_prediction', 
+        'final_date'
+    )
+    search_fields = (
+        'code_prediction', 
+        'user__username'
+    )
+    readonly_fields = ('created_at',)
+    date_hierarchy = 'created_at'
+    actions = ['export_as_csv']
 
+    def export_as_csv(self, request, queryset):
+        meta = self.model._meta
+        field_names = [field.name for field in meta.fields]
 
-# Si no usas el decorador @admin.register, tendrías que hacerlo así:
-# admin.site.register(ConsuptionPredictionLot, ConsuptionPredictionLotAdmin)    
-  
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename={meta.verbose_name_plural}.csv'
+        writer = csv.writer(response)
+
+        writer.writerow(field_names)
+        for obj in queryset:
+            row = [getattr(obj, field) for field in field_names]
+            writer.writerow(row)
+
+        return response
+    export_as_csv.short_description = "Exportar seleccionados como CSV"

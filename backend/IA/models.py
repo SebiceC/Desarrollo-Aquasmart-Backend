@@ -74,3 +74,31 @@ class ConsuptionPredictionLot(models.Model):
             now = timezone.now()
             self.final_date = now + timedelta(days=7)
         super().save(*args, **kwargs)
+
+class ConsuptionPredictionBocatoma(models.Model):
+    ''' Modelo que almacena la predicción de consumo de un lote '''
+    class PeriodTime(models.TextChoices):
+        ONE = "1", ("1")
+        THREE = "3", ("3")
+        SIX = "6", ("6")
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="Usuario solicitante", help_text="Usuario que solicita la predicción" )    
+    period_time = models.CharField(max_length=1, choices=PeriodTime, verbose_name="Periodo mensual de predicción", help_text="Periodo de tiempo (meses) a predecir")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de creación de la prediccion", help_text="Fecha de creacion de la predicción")
+    date_prediction = models.DateField(null=True, verbose_name="Meses de predicción", help_text="Meses de predicción")
+    consumption_prediction = models.FloatField(verbose_name="Consumo predecido", help_text="Consumo predecido")
+    code_prediction = models.CharField(max_length=20, verbose_name="Código para las predicciones", help_text="Código de las predicciones")
+    final_date = models.DateTimeField()
+
+    class Meta:
+        verbose_name = "Predicción de consumo de bocatoma"
+        verbose_name_plural = "Predicciones de consumo de bocatoma"
+
+    def __str__(self):
+        return f"{self.code_prediction} - {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+
+    def save(self, *args,**kwargs):
+        if self.final_date is None:
+            now = timezone.now()
+            self.final_date = now + timedelta(days=7)
+        super().save(*args, **kwargs)
