@@ -58,7 +58,7 @@ INSTALLED_APPS = [
     'communication', 
     'mqtt',  
     'esp',
-    #'IA',
+    'IA',
     'audit_log'
 ]
 
