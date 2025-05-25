@@ -97,7 +97,7 @@ class FlowRequest(BaseRequestReport):
                 raise ValueError("El caudal del lote ya está activo. No es necesario solicitar activación.")
 
     def _validate_observations(self):
-        if self.flow_request_type in {FlowRequestType.FLOW_TEMPORARY_CANCEL, FlowRequestType.FLOW_DEFINITIVE_CANCEL, FlowRequestType.FLOW_ACTIVATION}:
+        if self.flow_request_type in {FlowRequestType.FLOW_TEMPORARY_CANCEL, FlowRequestType.FLOW_DEFINITIVE_CANCEL}:
             if not self.observations:
                 raise ValueError("El campo 'observations' es obligatorio.")
             
