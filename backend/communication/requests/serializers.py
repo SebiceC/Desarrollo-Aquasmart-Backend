@@ -37,9 +37,9 @@ class FlowRequestSerializer(serializers.ModelSerializer):
         if flow_request_type in {FlowRequestType.FLOW_CHANGE, FlowRequestType.FLOW_ACTIVATION}:
             if requested_flow is None:
                 raise serializers.ValidationError("El caudal es obligatorio para la solicitud.")
-            if requested_flow < 1 or requested_flow >= 11.7:
+            if requested_flow < 1 or requested_flow >= 180:
                 raise serializers.ValidationError(
-                    "El caudal solicitado debe estar dentro del rango de 1 L/seg a 11.7 L/seg."
+                    "El caudal solicitado debe estar dentro del rango de 1 a 180."
                 )
 
     def _get_device_valve4(self, lot):
