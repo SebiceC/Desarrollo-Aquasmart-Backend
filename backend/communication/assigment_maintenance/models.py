@@ -28,6 +28,7 @@ class Assignment(models.Model):
             ("can_assign_user", "Puede asignar un usuario"),
             ('Can_view_assignment', 'Puede ver asignaciones'),
             ('view_all_assignments', 'Puede ver todas las asignaciones'),
+            ('can_manage_reports','Puede aprobar o re-asignar informes')
             
         ]
 
