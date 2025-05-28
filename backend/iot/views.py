@@ -6,7 +6,8 @@ from rest_framework import status
 from .serializers import IoTDeviceSerializer, DeviceTypeSerializer, UpdateValveFlowSerializer
 from .models import IoTDevice, DeviceType
 from django.shortcuts import get_object_or_404
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated
+from .permmisions import CanChangeValveFlowPermission
 
 class RegisterIoTDeviceView(APIView):
     def post(self, request, *args, **kwargs):
@@ -83,15 +84,17 @@ class IoTDeviceUpdateView(generics.UpdateAPIView):
 class UpdateValveFlowView(generics.UpdateAPIView):
     queryset = IoTDevice.objects.all()
     serializer_class = UpdateValveFlowSerializer
-    lookup_field = 'iot_id'  # Buscar por iot_id
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    lookup_field = 'iot_id'
+    permission_classes = [IsAuthenticated, CanChangeValveFlowPermission]
 
     def update(self, request, *args, **kwargs):
-        instance = self.get_object()        
+        instance = self.get_object()
+        self.check_object_permissions(request, instance)  # Aquí se verifica el permiso personalizado
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({"message": "Caudal actualizado exitosamente."}, status=status.HTTP_200_OK)
+
 
 # 🔹 Listar todos los tipos de dispositivos y crear uno nuevo
 class DeviceTypeListCreateView(generics.ListCreateAPIView):

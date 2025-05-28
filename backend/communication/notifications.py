@@ -189,14 +189,16 @@ def send_maintenance_report_notification(report):
     """Notificación cuando se crea un informe de mantenimiento"""
     try:
         subject = f"📄 Informe de Mantenimiento #{report.id} - {report.get_status_display()}"
-        
+
         # Determinar si es para solicitud o reporte
         if report.assignment.flow_request:
             obj_type = "Solicitud de Caudal"
             obj_id = report.assignment.flow_request.id
+            report_creator_email = report.assignment.flow_request.created_by.email
         else:
             obj_type = "Reporte de Fallo"
             obj_id = report.assignment.failure_report.id
+            report_creator_email = report.assignment.failure_report.created_by.email
 
         context = {
             'report_id': report.id,
@@ -209,11 +211,12 @@ def send_maintenance_report_notification(report):
             'is_approved': "Aprobado" if report.is_approved else "Pendiente",
             'description': report.description or "No se proporcionó descripción",
         }
-        
-        # Enviar al técnico y al supervisor
+
+        # Enviar al técnico y al creador del reporte/solicitud
         return all([
-            _send_notification_email(subject, context, 'maintenance_report', report.assignment.assigned_to.email),
-            _send_notification_email(subject, context, 'maintenance_report', report.assignment.assigned_by.email)
+            _send_notification_email(subject, context, 'maintenance_report', report.assignment.assigned_to.email),            
+            _send_notification_email(subject, context, 'maintenance_report', report.assignment.assigned_by.email),
+            _send_notification_email(subject, context, 'maintenance_report', report_creator_email),
         ])
     except Exception as e:
         print(f"Error al preparar notificación de informe: {str(e)}")

@@ -136,6 +136,10 @@ class IoTDevice(models.Model):
     class Meta:
         verbose_name = "Dispositivo IoT"
         verbose_name_plural = "Dispositivos IoT"
+        permissions = [
+            ("change_bocatoma_flow", "Puede cambiar caudal de válvula bocatoma"),
+            ("change_all_lots_flow", "Puede cambiar caudal de todas las válvulas de lotes"),
+        ]
 
     def save(self, *args, **kwargs):
         if not self.iot_id:

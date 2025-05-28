@@ -17,6 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path,include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
+    
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
@@ -26,9 +27,10 @@ urlpatterns = [
     path("api/plot-lot/",include("plots_lots.urls"), name="app-plots-lots"),
     path("api/iot/",include("iot.urls"), name="app-iot"),
     path("api/admin/",include("API.groups_permissions.urls"),name="Permisos_roles"),
-    path("api/caudal/",include("caudal.urls"),name="app-caudal"),
+    path("api/caudal/",include("caudal.urls"),name="app -caudal"),
     path("api/billing/", include("billing.urls")),
     path("api/communication/", include("communication.urls")),
+    path("api/esp32/", include("esp.urls")),
     path('api/ia/', include('IA.urls')),     
     path("api/auditlog/", include("audit_log.urls"), name="app-audit_log"),
 ]

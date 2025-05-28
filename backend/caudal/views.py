@@ -1,6 +1,6 @@
 from rest_framework import viewsets
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from .models import FlowMeasurement, FlowMeasurementPredio, FlowMeasurementLote,FlowInconsistency
 from .serializers import FlowMeasurementSerializer,FlowMeasurementLoteSerializer, FlowMeasurementPredioSerializer,FlowInconsistencySerializer
@@ -31,7 +31,7 @@ class FlowMeasurementPredioViewSet(viewsets.ModelViewSet):
 class FlowMeasurementLoteViewSet(viewsets.ModelViewSet):
     queryset = FlowMeasurementLote.objects.all()
     serializer_class = FlowMeasurementLoteSerializer
-    permission_classes=[IsAuthenticated]    
+    permission_classes=[AllowAny]    
 
 
 class FlowInconsistencyViewSet(viewsets.ReadOnlyModelViewSet):

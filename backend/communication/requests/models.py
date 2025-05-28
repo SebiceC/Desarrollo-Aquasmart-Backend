@@ -41,8 +41,8 @@ class FlowRequest(BaseRequestReport):
         if self.flow_request_type in {FlowRequestType.FLOW_CHANGE, FlowRequestType.FLOW_ACTIVATION}:
             if self.requested_flow is None:
                 raise ValueError("El caudal es obligatorio para la solicitud.")
-            if self.requested_flow < 1 or self.requested_flow >= 11.7:
-                raise ValueError("El caudal solicitado debe estar dentro del rango de 1 L/seg a 11.7 L/seg.")
+            if self.requested_flow < 1 or self.requested_flow > 180:
+                raise ValueError("El caudal solicitado debe estar dentro del rango de 1 L/seg a 180 L/seg.")
 
     def _check_caudal_flow_inactive(self):
         device = self._get_device
@@ -97,7 +97,7 @@ class FlowRequest(BaseRequestReport):
                 raise ValueError("El caudal del lote ya está activo. No es necesario solicitar activación.")
 
     def _validate_observations(self):
-        if self.flow_request_type in {FlowRequestType.FLOW_TEMPORARY_CANCEL, FlowRequestType.FLOW_DEFINITIVE_CANCEL, FlowRequestType.FLOW_ACTIVATION}:
+        if self.flow_request_type in {FlowRequestType.FLOW_TEMPORARY_CANCEL, FlowRequestType.FLOW_DEFINITIVE_CANCEL}:
             if not self.observations:
                 raise ValueError("El campo 'observations' es obligatorio.")
             

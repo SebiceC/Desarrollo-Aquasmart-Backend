@@ -13,7 +13,7 @@ from django.conf import settings
 from .permissions import PuedeCambiarIsActive,CanRegister,CanAddDocumentType
 from rest_framework.authentication import TokenAuthentication
 from rest_framework import serializers
-
+from django.contrib.auth.models import Group
 
 from django.contrib.auth.models import Permission
 from django.shortcuts import get_object_or_404
@@ -206,6 +206,8 @@ class UserRegisterAPIView(APIView):
         user.is_registered = True
         user.is_active = True
         user.save()
+        group, created = Group.objects.get_or_create(name='Usuario')  # Cambia 'NombreDelGrupo'
+        user.groups.add(group)
         return Response({'status': 'User registred'}, status=status.HTTP_200_OK)
 
 class UserInactiveAPIView(APIView):
