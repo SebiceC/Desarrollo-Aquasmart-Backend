@@ -1,7 +1,7 @@
 from auditlog.models import LogEntry
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.pagination import PageNumberPagination
 from .filters import LogEntryFilter
@@ -16,7 +16,7 @@ class AuditLogPagination(PageNumberPagination):
 
 class LogEntryListView(generics.ListAPIView):
     serializer_class = LogEntrySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
     pagination_class = AuditLogPagination
     filterset_class = LogEntryFilter
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
